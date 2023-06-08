@@ -9,5 +9,3 @@ for _, module: ModuleScript in table.move(sharedComponents, 1, #sharedComponents
 	end
 	require(module)
 end
-
-require(script.Services.RagdollController)

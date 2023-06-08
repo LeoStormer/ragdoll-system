@@ -34,35 +34,43 @@ local SOCKET_SETTINGS = {
 }
 
 function setupCollisionConstraints(ragdoll)
-	local noCollisionConstraint1 = BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
+	local noCollisionConstraint1 =
+		BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
 	noCollisionConstraint1.Part0 = ragdoll.character.RightFoot
 	noCollisionConstraint1.Part1 = ragdoll.character.RightUpperLeg
 
-	local noCollisionConstraint2 = BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
+	local noCollisionConstraint2 =
+		BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
 	noCollisionConstraint2.Part0 = ragdoll.character.RightUpperLeg
 	noCollisionConstraint2.Part1 = ragdoll.character.UpperTorso
 
-	local noCollisionConstraint3 = BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
+	local noCollisionConstraint3 =
+		BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
 	noCollisionConstraint3.Part0 = ragdoll.character.RightLowerLeg
 	noCollisionConstraint3.Part1 = ragdoll.character.UpperTorso
 
-	local noCollisionConstraint4 = BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
+	local noCollisionConstraint4 =
+		BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
 	noCollisionConstraint4.Part0 = ragdoll.character.LeftFoot
 	noCollisionConstraint4.Part1 = ragdoll.character.LeftUpperLeg
 
-	local noCollisionConstraint5 = BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
+	local noCollisionConstraint5 =
+		BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
 	noCollisionConstraint5.Part0 = ragdoll.character.LeftUpperLeg
 	noCollisionConstraint5.Part1 = ragdoll.character.UpperTorso
 
-	local noCollisionConstraint6 = BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
+	local noCollisionConstraint6 =
+		BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
 	noCollisionConstraint6.Part0 = ragdoll.character.LeftLowerLeg
 	noCollisionConstraint6.Part1 = ragdoll.character.UpperTorso
 
-	local noCollisionConstraint7 = BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
+	local noCollisionConstraint7 =
+		BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
 	noCollisionConstraint7.Part0 = ragdoll.character.LeftHand
 	noCollisionConstraint7.Part1 = ragdoll.character.LeftUpperArm
 
-	local noCollisionConstraint8 = BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
+	local noCollisionConstraint8 =
+		BaseRagdoll._addConstraint(ragdoll, BaseRagdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
 	noCollisionConstraint8.Part0 = ragdoll.character.RightHand
 	noCollisionConstraint8.Part1 = ragdoll.character.RightUpperArm
 end
@@ -94,7 +102,18 @@ function R15Ragdoll.new(character): BaseRagdoll.Ragdoll
 	setupLimbs(self)
 
 	self._trove:Connect(self.humanoid.Died, function()
-		self:enable()
+		self:collapse()
+	end)
+
+	self._trove:Connect(character:GetAttributeChangedSignal("Ragdolled"), function()
+		--the server has ragdolled us, we dont need to do anything other than manage the humanoid
+		local ragdolled = character:GetAttribute("Ragdolled")
+		if ragdolled == true then
+			self:activateRagdollPhysics()
+		else
+			self:deactivateRagdollPhysics()
+		end
+		self.ragdolled = ragdolled
 	end)
 
 	return self

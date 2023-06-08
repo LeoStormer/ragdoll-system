@@ -1,0 +1,29 @@
+{
+    "ClassName": "Folder",
+    "Children": [
+        {
+            "Name": "ActivateRagdollRemote",
+            "ClassName": "RemoteEvent"
+        },
+        {
+            "Name": "DeactivateRagdollRemote",
+            "ClassName": "RemoteEvent"
+        },
+        {
+            "Name": "CollapseRagdollRemote",
+            "ClassName": "RemoteEvent"
+        },
+        {
+            "Name": "DeactivateRagdollBindable",
+            "ClassName": "BindableEvent"
+        },
+        {
+            "Name": "ActivateRagdollBindable",
+            "ClassName": "BindableEvent"
+        },
+        {
+            "Name": "CollapseRagdollBindable",
+            "ClassName": "BindableEvent"
+        }
+    ]
+}

@@ -79,7 +79,18 @@ function R6Ragdoll.new(character): BaseRagdoll.Ragdoll
 	setupLimbs(self)
 
 	self._trove:Connect(self.humanoid.Died, function()
-		self:enable()
+		self:collapse()
+	end)
+
+	self._trove:Connect(character:GetAttributeChangedSignal("Ragdolled"), function()
+		--the server has ragdolled us, we dont need to do anything other than manage the humanoid
+		local ragdolled = character:GetAttribute("Ragdolled")
+		if ragdolled == true then
+			self:activateRagdollPhysics()
+		else
+			self:deactivateRagdollPhysics()
+		end
+		self.ragdolled = ragdolled
 	end)
 
 	return self

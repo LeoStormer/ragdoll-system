@@ -9,4 +9,6 @@ function Ragdoll.new(character): BaseRagdoll.Ragdoll
 	return if isR15 then R15Ragdoll.new(character) else R6Ragdoll.new(character)
 end
 
+export type Ragdoll = BaseRagdoll.Ragdoll
+
 return Ragdoll

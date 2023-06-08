@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
+local TableUtils = require(script.Parent.Parent.TableUtils)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local Trove = require(ReplicatedStorage.Packages.Trove)
 
@@ -8,6 +9,7 @@ local BaseRagdoll = {}
 BaseRagdoll.__index = BaseRagdoll
 
 local LIMB_PHYSICAL_PROPERTIES = PhysicalProperties.new(5, 0.7, 0.5, 100, 100)
+local ROOT_PART_PHYSICAL_PROPERTIES = PhysicalProperties.new(0, 0, 0, 0, 0)
 local RAGDOLL_TIMEOUT_INTERVAL = 2
 local RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD = 2
 
@@ -35,7 +37,6 @@ ANGULARVELOCITY_TEMPLATE.Enabled = false
 BaseRagdoll.ANGULARVELOCITY_TEMPLATE = ANGULARVELOCITY_TEMPLATE
 
 function BaseRagdoll.new(character, numConstraints: number?)
-	character:SetAttribute("Ragdolled", false)
 	local humanoid = character:WaitForChild("Humanoid")
 	humanoid.AutomaticScalingEnabled = false
 	humanoid.BreakJointsOnDeath = false
@@ -44,58 +45,88 @@ function BaseRagdoll.new(character, numConstraints: number?)
 	local constraintsFolder = trove:Add(Instance.new("Folder"))
 	constraintsFolder.Name = "RagdollConstraints"
 	constraintsFolder.Parent = character
+	character:SetAttribute("Ragdolled", false)
+	local children = character:GetChildren()
 
 	local self = {
 		character = character,
 		humanoid = humanoid,
 		humanoidRootPart = character:WaitForChild("HumanoidRootPart"),
+		collapsed = false,
 		frozen = false,
 		ragdolled = false,
 		ragdollBegan = trove:Construct(Signal),
 		ragdollEnded = trove:Construct(Signal),
 		_trove = trove,
 		_constraintsFolder = constraintsFolder,
-		_activeTrove = trove:Extend(),
 		_constraints = if numConstraints then table.create(numConstraints) else {},
 		_originalSettings = {},
-		_accessoryHandles = {},
-		_motor6Ds = {},
-		_limbs = {},
+		_limbs = TableUtils.filter(children, function(limb: BasePart)
+			return limb:IsA("BasePart") and limb.Name ~= "HumanoidRootPart"
+		end),
+		_accessoryHandles = TableUtils.map(
+			TableUtils.filter(children, function(accessory: Accessory)
+				return accessory:IsA("Accessory")
+			end),
+			function(accessory: Accessory)
+				return accessory:FindFirstChild("Handle")
+			end
+		),
+		_motor6Ds = TableUtils.filter(character:GetDescendants(), function(motor: Motor6D)
+			return motor:IsA("Motor6D")
+		end),
 	}
 
-	for _, limb in character:GetChildren() do
-		if limb:IsA("Accessory") then
-			local handle = limb.Handle
-			BaseRagdoll._recordOriginalSettings(self, handle, {
-				CanCollide = handle.CanCollide,
-				CanTouch = handle.CanTouch,
-				Massless = handle.Massless,
-			})
-			table.insert(self._accessoryHandles, handle)
-		end
+	BaseRagdoll._recordOriginalSettings(self)
+	
+	self.ragdollBegan:Connect(function()
+		character:SetAttribute("Ragdolled", true)
+	end)
 
-		for _, motor6D: Motor6D in limb:getChildren() do
-			if not motor6D:IsA("Motor6D") then
-				continue
+	self.ragdollEnded:Connect(function()
+		character:SetAttribute("Ragdolled", false)
+	end)
+
+	return self
+end
+
+function BaseRagdoll._recordOriginalSettings(ragdoll)
+	local function recordSetting(object: Instance, record)
+		if ragdoll._originalSettings[object] then
+			for key, value in record do
+				ragdoll._originalSettings[object][key] = value
 			end
-
-			local affectedLimb = motor6D.Part1
-			BaseRagdoll._recordOriginalSettings(self, motor6D, { Enabled = motor6D.Enabled })
-			BaseRagdoll._recordOriginalSettings(self, affectedLimb, {
-				Anchored = affectedLimb.Anchored,
-				CanCollide = affectedLimb.CanCollide,
-				CustomPhysicalProperties = affectedLimb.CustomPhysicalProperties,
-			})
-
-			table.insert(self._motor6Ds, motor6D)
-			table.insert(self._limbs, affectedLimb)
+		else
+			ragdoll._originalSettings[object] = record
 		end
 	end
 
-	BaseRagdoll._recordOriginalSettings(self, self.humanoidRootPart, { CanCollide = self.humanoidRootPart.CanCollide })
-	BaseRagdoll._recordOriginalSettings(self, humanoid, { WalkSpeed = humanoid.WalkSpeed })
+	recordSetting(ragdoll.humanoid, { WalkSpeed = ragdoll.humanoid.WalkSpeed })
+	recordSetting(ragdoll.humanoidRootPart, {
+		Anchored = ragdoll.humanoidRootPart.Anchored,
+		CanCollide = ragdoll.humanoidRootPart.CanCollide,
+		CustomPhysicalProperties = ragdoll.humanoidRootPart.CustomPhysicalProperties,
+	})
 
-	return self
+	for _, limb in ragdoll._limbs do
+		recordSetting(limb, {
+			Anchored = limb.Anchored,
+			CanCollide = limb.CanCollide,
+			CustomPhysicalProperties = limb.CustomPhysicalProperties,
+		})
+	end
+
+	for _, handle in ragdoll._accessoryHandles do
+		recordSetting(handle, {
+			CanCollide = handle.CanCollide,
+			CanTouch = handle.CanTouch,
+			Massless = handle.Massless,
+		})
+	end
+
+	for _, motor6D in ragdoll._motor6Ds do
+		recordSetting(motor6D, { Enabled = motor6D.Enabled })
+	end
 end
 
 function BaseRagdoll._addConstraint(ragdoll, constraint)
@@ -157,53 +188,15 @@ function BaseRagdoll:_refreshLayeredClothing()
 	end
 end
 
-function BaseRagdoll:_timeoutRagdoll()
-	local timer = 0
-	local lastPos = self.humanoidRootPart.Position
-
-	local connection
-	connection = self._activeTrove:Connect(RunService.Heartbeat, function(dt)
-		timer += dt
-		if timer < RAGDOLL_TIMEOUT_INTERVAL then
-			return
-		end
-
-		local newPos = self.humanoidRootPart.Position
-		local distance = (newPos - lastPos).Magnitude
-		lastPos = newPos
-		timer -= RAGDOLL_TIMEOUT_INTERVAL
-		if distance >= RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD then
-			return
-		end
-		self._activeTrove:Remove(connection)
-
-		if self.humanoid:GetState() == Enum.HumanoidStateType.Dead then
-			self:freeze()
-		else
-			self:deactivateRagdollPhysics()
-		end
-	end)
-end
-
-function BaseRagdoll._recordOriginalSettings(ragdoll, object: Instance, record)
-	if ragdoll._originalSettings[object] then
-		for key, value in record do
-			ragdoll._originalSettings[object][key] = value
-		end
-	else
-		ragdoll._originalSettings[object] = record
-	end
-end
-
 function BaseRagdoll:activateRagdollPhysics()
 	if self.ragdolled then
 		return
 	end
 
 	self.ragdolled = true
-	self.character:SetAttribute("Ragdolled", true)
-	self.humanoidRootPart.CanCollide = false
 	self.humanoid.WalkSpeed = 0
+	self.humanoidRootPart.CanCollide = false
+	self.humanoidRootPart.CustomPhysicalProperties = ROOT_PART_PHYSICAL_PROPERTIES
 
 	for _, handle in self._accessoryHandles do
 		handle.CanCollide = false
@@ -223,7 +216,7 @@ function BaseRagdoll:activateRagdollPhysics()
 	for _, constraint: Constraint in self._constraints do
 		constraint.Enabled = true
 	end
-	
+
 	self.ragdollBegan:Fire()
 end
 
@@ -233,9 +226,10 @@ function BaseRagdoll:deactivateRagdollPhysics()
 	end
 
 	self.ragdolled = false
-	self.character:SetAttribute("Ragdolled", false)
-	self.humanoidRootPart.CanCollide = self._originalSettings[self.humanoidRootPart].CanCollide
 	self.humanoid.WalkSpeed = self._originalSettings[self.humanoid].WalkSpeed
+	self.humanoidRootPart.CanCollide = self._originalSettings[self.humanoidRootPart].CanCollide
+	self.humanoidRootPart.CustomPhysicalProperties =
+		self._originalSettings[self.humanoidRootPart].CustomPhysicalProperties
 
 	for _, handle in self._accessoryHandles do
 		handle.CanCollide = self._originalSettings[handle].CanCollide
@@ -259,10 +253,47 @@ function BaseRagdoll:deactivateRagdollPhysics()
 	self.ragdollEnded:Fire()
 end
 
-function BaseRagdoll:enable()
+function BaseRagdoll:collapse()
+	if self.collapsed then
+		return
+	end
+	
+	self.collapsed = true
 	self:activateRagdollPhysics()
 	self:_refreshLayeredClothing()
-	self:_timeoutRagdoll()
+
+	local timer = 0
+	local lastPos = self.humanoidRootPart.Position
+
+	local connection
+	connection = self._trove:Connect(RunService.Heartbeat, function(dt)
+		if not self.ragdolled then
+			self.collapsed = false
+			connection:Disconnect()
+			return
+		end
+		
+		timer += dt
+		if timer < RAGDOLL_TIMEOUT_INTERVAL then
+			return
+		end
+
+		local newPos = self.humanoidRootPart.Position
+		local distance = (newPos - lastPos).Magnitude
+		lastPos = newPos
+		timer -= RAGDOLL_TIMEOUT_INTERVAL
+		if distance >= RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD then
+			return
+		end
+		self._trove:Remove(connection)
+
+		self.collapsed = false
+		if self.humanoid:GetState() == Enum.HumanoidStateType.Dead then
+			self:freeze()
+		else
+			self:deactivateRagdollPhysics()
+		end
+	end)
 end
 
 function BaseRagdoll:freeze()
@@ -270,9 +301,9 @@ function BaseRagdoll:freeze()
 		return
 	end
 	self.frozen = true
+	self.humanoidRootPart.Anchored = true
 
 	for _, part in self._limbs do
-		self:_recordOriginalSettings(part, { Anchored = part.Anchored })
 		part.Anchored = true
 	end
 end
@@ -282,8 +313,9 @@ function BaseRagdoll:unfreeze()
 		return
 	end
 	self.frozen = false
+	self.humanoidRootPart.Anchored = self._originalSettings[self.humanoidRootPart].Anchored
 
-	for _, part in self.limbs do
+	for _, part in self._limbs do
 		part.Anchored = self._originalSettings[part].Anchored
 	end
 end
@@ -294,10 +326,14 @@ end
 BaseRagdoll.Destroy = BaseRagdoll.destroy
 
 export type Ragdoll = {
-	enabled: boolean,
+	collapsed: boolean,
+	frozen: boolean,
+	ragdolled: boolean,
+	activateRagdollPhysics: (self: Ragdoll) -> (),
+	deactivateRagdollPhysics: (self: Ragdoll) -> (),
+	collapse: (self: Ragdoll) -> (),
 	freeze: (self: Ragdoll) -> (),
-	enable: (self: Ragdoll) -> (),
-	disable: (self: Ragdoll) -> (),
+	unfreeze: (self: Ragdoll) -> (),
 	destroy: (self: Ragdoll) -> (),
 }
 
