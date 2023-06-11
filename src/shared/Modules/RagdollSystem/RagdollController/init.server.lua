@@ -6,13 +6,14 @@ local Remotes = script.Parent:WaitForChild("Remotes")
 local ActivateRagdollRemote: RemoteEvent = Remotes:WaitForChild("ActivateRagdollRemote")
 local DeactivateRagdollRemote: RemoteEvent = Remotes:WaitForChild("DeactivateRagdollRemote")
 local CollapseRagdollRemote: RemoteEvent = Remotes:WaitForChild("CollapseRagdollRemote")
-local ActivateRagdollBindable: BindableEvent = Remotes:WaitForChild("ActivateRagdollBindable")
-local DeactivateRagdollBindable: BindableEvent = Remotes:WaitForChild("DeactivateRagdollBindable")
-local CollapseRagdollBindable: BindableEvent = Remotes:WaitForChild("CollapseRagdollBindable")
+local ActivatePlayerRagdollBindable: BindableEvent = Remotes:WaitForChild("ActivatePlayerRagdollBindable")
+local DeactivatePlayerRagdollBindable: BindableEvent = Remotes:WaitForChild("DeactivatePlayerRagdollBindable")
+local CollapsePlayerRagdollBindable: BindableEvent = Remotes:WaitForChild("CollapsePlayerRagdollBindable")
 
+local player = Players.LocalPlayer
 local ragdoll = nil
 
-function onPlayerAdded(character)
+function onCharacterAdded(character)
 	if ragdoll then
 		ragdoll:destroy()
 	end
@@ -45,7 +46,11 @@ function collapseRagdoll()
 	CollapseRagdollRemote:FireServer()
 end
 
-Players.LocalPlayer.CharacterAdded:Connect(onPlayerAdded)
-ActivateRagdollBindable.Event:Connect(activateRagdollPhysics)
-DeactivateRagdollBindable.Event:Connect(deactivateRagdollPhysics)
-CollapseRagdollBindable.Event:Connect(collapseRagdoll)
+if player.Character then
+	onCharacterAdded(player.Character)
+end
+
+player.CharacterAdded:Connect(onCharacterAdded)
+ActivatePlayerRagdollBindable.Event:Connect(activateRagdollPhysics)
+DeactivatePlayerRagdollBindable.Event:Connect(deactivateRagdollPhysics)
+CollapsePlayerRagdollBindable.Event:Connect(collapseRagdoll)

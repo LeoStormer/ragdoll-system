@@ -4,9 +4,14 @@ local Players = game:GetService("Players")
 local RagdollFactory = require(script.Parent.RagdollFactory)
 
 local Remotes = script.Parent.Remotes
+-- For activating player ragdolls
 local ActivateRagdollRemote: RemoteEvent = Remotes.ActivateRagdollRemote
 local DeactivateRagdollRemote: RemoteEvent = Remotes.DeactivateRagdollRemote
 local CollapseRagdollRemote: RemoteEvent = Remotes.CollapseRagdollRemote
+local ActivatePlayerRagdollBindable: BindableEvent = Remotes.ActivateRagdollBindable
+local DeactivatePlayerRagdollBindable: BindableEvent = Remotes.DeactivateRagdollBindable
+local CollapsePlayerRagdollBindable: BindableEvent = Remotes.CollapseRagdollBindable
+--For activating npc ragdolls
 local ActivateRagdollBindable: BindableEvent = Remotes.ActivateRagdollBindable
 local DeactivateRagdollBindable: BindableEvent = Remotes.DeactivateRagdollBindable
 local CollapseRagdollBindable: BindableEvent = Remotes.CollapseRagdollBindable
@@ -31,6 +36,26 @@ end
 
 CollectionService:GetInstanceAddedSignal("NPCRagdoll"):Connect(onNPCRagdollAdded)
 CollectionService:GetInstanceRemovedSignal("NPCRagdoll"):Connect(onNPCRagdollRemoved)
+ActivateRagdollBindable.Event:Connect(function(npcModel)
+	local ragdoll = npcRagdolls[npcModel]
+	if ragdoll then
+		ragdoll:activateRagdollPhysics()
+	end
+end)
+
+DeactivateRagdollBindable.Event:Connect(function(npcModel)
+	local ragdoll = npcRagdolls[npcModel]
+	if ragdoll then
+		ragdoll:deactivateRagdollPhysics()
+	end
+end)
+
+CollapseRagdollBindable.Event:Connect(function(npcModel)
+	local ragdoll = npcRagdolls[npcModel]
+	if ragdoll then
+		ragdoll:collapse()
+	end
+end)
 
 local ragdolls: { [any]: RagdollFactory.Ragdoll? } = {}
 
@@ -84,8 +109,8 @@ function collapseRagdoll(player: Player)
 end
 
 ActivateRagdollRemote.OnServerEvent:Connect(activateRagdollPhysics)
-ActivateRagdollBindable.Event:Connect(activateRagdollPhysics)
 DeactivateRagdollRemote.OnServerEvent:Connect(deactivateRagdollPhysics)
-DeactivateRagdollBindable.Event:Connect(deactivateRagdollPhysics)
 CollapseRagdollRemote.OnServerEvent:Connect(collapseRagdoll)
-CollapseRagdollBindable.Event:Connect(collapseRagdoll)
+ActivatePlayerRagdollBindable.Event:Connect(activateRagdollPhysics)
+DeactivatePlayerRagdollBindable.Event:Connect(deactivateRagdollPhysics)
+CollapsePlayerRagdollBindable.Event:Connect(collapseRagdoll)
