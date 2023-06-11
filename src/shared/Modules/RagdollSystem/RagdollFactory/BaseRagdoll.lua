@@ -10,7 +10,7 @@ BaseRagdoll.__index = BaseRagdoll
 
 local LIMB_PHYSICAL_PROPERTIES = PhysicalProperties.new(5, 0.7, 0.5, 100, 100)
 local ROOT_PART_PHYSICAL_PROPERTIES = PhysicalProperties.new(0, 0, 0, 0, 0)
-local RAGDOLL_TIMEOUT_INTERVAL = 2
+local RAGDOLL_TIMEOUT_INTERVAL = 1.5
 local RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD = 2
 
 local BALLSOCKETCONSTRAINT_TEMPLATE: BallSocketConstraint = Instance.new("BallSocketConstraint")
@@ -101,7 +101,7 @@ function BaseRagdoll._recordOriginalSettings(ragdoll)
 		end
 	end
 
-	recordSetting(ragdoll.humanoid, { WalkSpeed = ragdoll.humanoid.WalkSpeed })
+	recordSetting(ragdoll.humanoid, { WalkSpeed = ragdoll.humanoid.WalkSpeed, AutoRotate = ragdoll.humanoid.AutoRotate, })
 	recordSetting(ragdoll.humanoidRootPart, {
 		Anchored = ragdoll.humanoidRootPart.Anchored,
 		CanCollide = ragdoll.humanoidRootPart.CanCollide,
@@ -195,6 +195,8 @@ function BaseRagdoll:activateRagdollPhysics()
 
 	self.ragdolled = true
 	self.humanoid.WalkSpeed = 0
+	self.humanoid.AutoRotate = false
+	self.humanoid:ChangeState(Enum.HumanoidStateType.Physics)
 	self.humanoidRootPart.CanCollide = false
 	self.humanoidRootPart.CustomPhysicalProperties = ROOT_PART_PHYSICAL_PROPERTIES
 
@@ -227,6 +229,8 @@ function BaseRagdoll:deactivateRagdollPhysics()
 
 	self.ragdolled = false
 	self.humanoid.WalkSpeed = self._originalSettings[self.humanoid].WalkSpeed
+	self.humanoid.AutoRotate = self._originalSettings[self.humanoid].AutoRotate
+	self.humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
 	self.humanoidRootPart.CanCollide = self._originalSettings[self.humanoidRootPart].CanCollide
 	self.humanoidRootPart.CustomPhysicalProperties =
 		self._originalSettings[self.humanoidRootPart].CustomPhysicalProperties
@@ -269,7 +273,7 @@ function BaseRagdoll:collapse()
 	connection = self._trove:Connect(RunService.Heartbeat, function(dt)
 		if not self.ragdolled then
 			self.collapsed = false
-			connection:Disconnect()
+			self._trove:Remove(connection)
 			return
 		end
 		
@@ -285,9 +289,9 @@ function BaseRagdoll:collapse()
 		if distance >= RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD then
 			return
 		end
-		self._trove:Remove(connection)
-
+		
 		self.collapsed = false
+		self._trove:Remove(connection)
 		if self.humanoid:GetState() == Enum.HumanoidStateType.Dead then
 			self:freeze()
 		else

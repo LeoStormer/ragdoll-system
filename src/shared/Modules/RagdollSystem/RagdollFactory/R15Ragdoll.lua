@@ -1,17 +1,18 @@
 local BaseRagdoll = require(script.Parent.BaseRagdoll)
+
 local UPPER_ARM_SOCKET_SETTINGS =
-	{ MaxFrictionTorque = 150, UpperAngle = 90, TwistLowerAngle = -45, TwistUpperAngle = 45 }
+	{ MaxFrictionTorque = 150, UpperAngle = 50, TwistLowerAngle = -70, TwistUpperAngle = 160 }
 local LOWER_ARM_SOCKET_SETTINGS =
-	{ MaxFrictionTorque = 150, UpperAngle = 0, TwistLowerAngle = -5, TwistUpperAngle = 65 }
+	{ MaxFrictionTorque = 150, UpperAngle = 0, TwistLowerAngle = -5, TwistUpperAngle = 95 }
 local UPPER_LEG_SOCKET_SETTINGS =
-	{ MaxFrictionTorque = 150, UpperAngle = 40, TwistLowerAngle = -5, TwistUpperAngle = 20 }
+	{ MaxFrictionTorque = 150, UpperAngle = 40, TwistLowerAngle = -45, TwistUpperAngle = 45 }
 local LOWER_LEG_SOCKET_SETTINGS =
-	{ MaxFrictionTorque = 150, UpperAngle = 0, TwistLowerAngle = -45, TwistUpperAngle = 10 }
+	{ MaxFrictionTorque = 150, UpperAngle = 0, TwistLowerAngle = -80, TwistUpperAngle = 5 }
 local HANDS_FEET_SOCKET_SETTINGS =
-	{ MaxFrictionTorque = 50, UpperAngle = 10, TwistLowerAngle = -45, TwistUpperAngle = 25 }
+	{ MaxFrictionTorque = 50, UpperAngle = 10, TwistLowerAngle = -45, TwistUpperAngle = 5 }
 
 local SOCKET_SETTINGS = {
-	Head = { MaxFrictionTorque = 150, UpperAngle = 15, TwistLowerAngle = -15, TwistUpperAngle = 15 },
+	Head = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
 	UpperTorso = { MaxFrictionTorque = 50, UpperAngle = 20, TwistLowerAngle = -10, TwistUpperAngle = 30 },
 	LowerTorso = { MaxFrictionTorque = 50, UpperAngle = 20, TwistLowerAngle = 0, TwistUpperAngle = 30 },
 
@@ -76,18 +77,12 @@ function setupCollisionConstraints(ragdoll)
 end
 
 function setupLimbs(ragdoll)
-	for _, limb in ragdoll.character:GetChildren() do
-		for _, motor6D: Motor6D in limb:GetChildren() do
-			if not motor6D:IsA("Motor6D") then
-				continue
-			end
-
-			local sourcePart = motor6D.Part0
-			local affectedLimb = motor6D.Part1
-			local cframe0 = motor6D.C0
-			local cframe1 = motor6D.C1
-			BaseRagdoll._setupLimb(ragdoll, SOCKET_SETTINGS, sourcePart, affectedLimb, cframe0, cframe1)
-		end
+	for _, motor6D: Motor6D in ragdoll._motor6Ds do
+		local sourcePart = motor6D.Part0
+		local affectedLimb = motor6D.Part1
+		local cframe0 = motor6D.C0
+		local cframe1 = motor6D.C1
+		BaseRagdoll._setupLimb(ragdoll, SOCKET_SETTINGS, sourcePart, affectedLimb, cframe0, cframe1)
 	end
 end
 

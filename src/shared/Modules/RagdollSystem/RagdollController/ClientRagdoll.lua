@@ -46,14 +46,6 @@ function ClientRagdoll.new(character: Model): BaseRagdoll.Ragdoll
 
 	BaseRagdoll._recordOriginalSettings(self)
 
-	self.ragdollBegan:Connect(function()
-		self.humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-	end)
-
-	self.ragdollEnded:Connect(function()
-		self.humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-	end)
-
 	trove:Connect(character:GetAttributeChangedSignal("Ragdolled"), function()
 		--the server has ragdolled us, we dont need to do anything other than manage the humanoid
 		local ragdolled = character:GetAttribute("Ragdolled")

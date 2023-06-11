@@ -1,9 +1,10 @@
 local BaseRagdoll = require(script.Parent.BaseRagdoll)
 
-local ARM_SOCKET_SETTINGS = { MaxFrictionTorque = 150, UpperAngle = 90, TwistLowerAngle = -45, TwistUpperAngle = 45 }
-local LEG_SOCKET_SETTINGS = { MaxFrictionTorque = 150, UpperAngle = 40, TwistLowerAngle = -5, TwistUpperAngle = 20 }
+local ARM_SOCKET_SETTINGS = { MaxFrictionTorque = 150, UpperAngle = 50, TwistLowerAngle = -70, TwistUpperAngle = 160 }
+local LEG_SOCKET_SETTINGS = { MaxFrictionTorque = 150, UpperAngle = 40, TwistLowerAngle = -60, TwistUpperAngle = 80 }
+
 local SOCKET_SETTINGS = {
-	Head = { MaxFrictionTorque = 150, UpperAngle = 15, TwistLowerAngle = -15, TwistUpperAngle = 15 },
+	Head = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
 	Torso = { MaxFrictionTorque = 50, UpperAngle = 20, TwistLowerAngle = 0, TwistUpperAngle = 30 },
 	["Right Arm"] = ARM_SOCKET_SETTINGS,
 	["Left Arm"] = ARM_SOCKET_SETTINGS,
