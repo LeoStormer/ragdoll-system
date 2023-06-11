@@ -339,6 +339,7 @@ export type Ragdoll = {
 	freeze: (self: Ragdoll) -> (),
 	unfreeze: (self: Ragdoll) -> (),
 	destroy: (self: Ragdoll) -> (),
+	Destroy: (self: Ragdoll) -> (),
 }
 
 return BaseRagdoll
