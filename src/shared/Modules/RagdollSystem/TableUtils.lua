@@ -1,4 +1,3 @@
-
 local TableUtils = {}
 
 function TableUtils.filter<T>(list, filterfunction: (T) -> boolean): { T }
@@ -13,8 +12,7 @@ function TableUtils.filter<T>(list, filterfunction: (T) -> boolean): { T }
 	return filteredlist
 end
 
-
-function TableUtils.map<T, U>(list: {T}, mapfunction: (T) -> U): { U }
+function TableUtils.map<T, U>(list: { T }, mapfunction: (T) -> U): { U }
 	local mappedList = table.create(#list)
 
 	for k, v in list do

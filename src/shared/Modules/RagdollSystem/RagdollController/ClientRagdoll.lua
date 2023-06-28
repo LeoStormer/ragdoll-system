@@ -60,7 +60,7 @@ function ClientRagdoll.new(character: Model): BaseRagdoll.Ragdoll
 	trove:Connect(humanoid.Died, function()
 		self:collapse()
 	end)
-	
+
 	return self
 end
 

@@ -1,14 +1,7 @@
 local Players = game:GetService("Players")
 
+local RagdollSystem = require(script.Parent)
 local ClientRagdoll = require(script:WaitForChild("ClientRagdoll"))
-
-local Remotes = script.Parent:WaitForChild("Remotes")
-local ActivateRagdollRemote: RemoteEvent = Remotes:WaitForChild("ActivateRagdollRemote")
-local DeactivateRagdollRemote: RemoteEvent = Remotes:WaitForChild("DeactivateRagdollRemote")
-local CollapseRagdollRemote: RemoteEvent = Remotes:WaitForChild("CollapseRagdollRemote")
-local ActivatePlayerRagdollBindable: BindableEvent = Remotes:WaitForChild("ActivatePlayerRagdollBindable")
-local DeactivatePlayerRagdollBindable: BindableEvent = Remotes:WaitForChild("DeactivatePlayerRagdollBindable")
-local CollapsePlayerRagdollBindable: BindableEvent = Remotes:WaitForChild("CollapsePlayerRagdollBindable")
 
 local player = Players.LocalPlayer
 local ragdoll = nil
@@ -24,18 +17,18 @@ function activateRagdollPhysics()
 	if not ragdoll or ragdoll.ragdolled then
 		return
 	end
-    (workspace.CurrentCamera).CameraSubject = ragdoll.character:FindFirstChild("Head")
+	(workspace.CurrentCamera).CameraSubject = ragdoll.character:FindFirstChild("Head")
 	ragdoll:activateRagdollPhysics()
-	ActivateRagdollRemote:FireServer()
+	RagdollSystem.Remotes.ActivateRagdoll:FireServer()
 end
 
 function deactivateRagdollPhysics()
 	if not ragdoll or not ragdoll.ragdolled then
 		return
 	end
-    (workspace.CurrentCamera).CameraSubject = ragdoll.humanoid
+	(workspace.CurrentCamera).CameraSubject = ragdoll.humanoid
 	ragdoll:deactivateRagdollPhysics()
-	DeactivateRagdollRemote:FireServer()
+	RagdollSystem.Remotes.DeactivateRagdoll:FireServer()
 end
 
 function collapseRagdoll()
@@ -43,7 +36,7 @@ function collapseRagdoll()
 		return
 	end
 	ragdoll:collapse()
-	CollapseRagdollRemote:FireServer()
+	RagdollSystem.Remotes.CollapseRagdoll:FireServer()
 end
 
 if player.Character then
@@ -51,6 +44,6 @@ if player.Character then
 end
 
 player.CharacterAdded:Connect(onCharacterAdded)
-ActivatePlayerRagdollBindable.Event:Connect(activateRagdollPhysics)
-DeactivatePlayerRagdollBindable.Event:Connect(deactivateRagdollPhysics)
-CollapsePlayerRagdollBindable.Event:Connect(collapseRagdoll)
+RagdollSystem.Signals.ActivatePlayerRagdoll:Connect(activateRagdollPhysics)
+RagdollSystem.Signals.DeactivatePlayerRagdoll:Connect(deactivateRagdollPhysics)
+RagdollSystem.Signals.CollapsePlayerRagdoll:Connect(collapseRagdoll)

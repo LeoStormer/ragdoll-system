@@ -78,7 +78,7 @@ function BaseRagdoll.new(character, numConstraints: number?)
 	}
 
 	BaseRagdoll._recordOriginalSettings(self)
-	
+
 	self.ragdollBegan:Connect(function()
 		character:SetAttribute("Ragdolled", true)
 	end)
@@ -101,7 +101,10 @@ function BaseRagdoll._recordOriginalSettings(ragdoll)
 		end
 	end
 
-	recordSetting(ragdoll.humanoid, { WalkSpeed = ragdoll.humanoid.WalkSpeed, AutoRotate = ragdoll.humanoid.AutoRotate, })
+	recordSetting(
+		ragdoll.humanoid,
+		{ WalkSpeed = ragdoll.humanoid.WalkSpeed, AutoRotate = ragdoll.humanoid.AutoRotate }
+	)
 	recordSetting(ragdoll.humanoidRootPart, {
 		Anchored = ragdoll.humanoidRootPart.Anchored,
 		CanCollide = ragdoll.humanoidRootPart.CanCollide,
@@ -261,7 +264,7 @@ function BaseRagdoll:collapse()
 	if self.collapsed then
 		return
 	end
-	
+
 	self.collapsed = true
 	self:activateRagdollPhysics()
 	self:_refreshLayeredClothing()
@@ -276,7 +279,7 @@ function BaseRagdoll:collapse()
 			self._trove:Remove(connection)
 			return
 		end
-		
+
 		timer += dt
 		if timer < RAGDOLL_TIMEOUT_INTERVAL then
 			return
@@ -289,7 +292,7 @@ function BaseRagdoll:collapse()
 		if distance >= RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD then
 			return
 		end
-		
+
 		self.collapsed = false
 		self._trove:Remove(connection)
 		if self.humanoid:GetState() == Enum.HumanoidStateType.Dead then

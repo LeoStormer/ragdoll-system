@@ -12,30 +12,6 @@
         {
             "Name": "CollapseRagdollRemote",
             "ClassName": "RemoteEvent"
-        },
-        {
-            "Name": "DeactivateRagdollBindable",
-            "ClassName": "BindableEvent"
-        },
-        {
-            "Name": "ActivateRagdollBindable",
-            "ClassName": "BindableEvent"
-        },
-        {
-            "Name": "CollapseRagdollBindable",
-            "ClassName": "BindableEvent"
-        },
-        {
-            "Name": "DeactivatePlayerRagdollBindable",
-            "ClassName": "BindableEvent"
-        },
-        {
-            "Name": "ActivatePlayerRagdollBindable",
-            "ClassName": "BindableEvent"
-        },
-        {
-            "Name": "CollapsePlayerRagdollBindable",
-            "ClassName": "BindableEvent"
         }
     ]
 }
