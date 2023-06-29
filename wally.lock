@@ -3,7 +3,7 @@
 registry = "test"
 
 [[package]]
-name = "nzeez/ragdoll-system"
+name = "gallikus/ragdoll-system"
 version = "0.1.0"
 dependencies = [["Signal", "sleitnick/signal@1.5.0"], ["Trove", "sleitnick/trove@0.5.0"]]
 
