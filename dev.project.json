@@ -1,0 +1,27 @@
+{
+  "name": "RagdollSystem",
+
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+
+      "Packages": {
+        "$path": "Packages",
+
+        "RagdollSystem": {
+          "$path": "lib"
+        }
+      }
+    },
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Main": {
+          "$path": "dev/client"
+        }
+      }
+    }
+  }
+}

@@ -1,14 +1,12 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 local BaseRagdoll = require(script.Parent.Parent.RagdollFactory.BaseRagdoll)
 local TableUtils = require(script.Parent.Parent.TableUtils)
-local Signal = require(ReplicatedStorage.Packages.Signal)
-local Trove = require(ReplicatedStorage.Packages.Trove)
+local Signal = require(script.Parent.Parent.Parent.Signal)
+local Trove = require(script.Parent.Parent.Parent.Trove)
 
-local ClientRagdoll = setmetatable({}, BaseRagdoll)
-ClientRagdoll.__index = ClientRagdoll
+local ReplicatedRagdoll = setmetatable({}, BaseRagdoll)
+ReplicatedRagdoll.__index = ReplicatedRagdoll
 
-function ClientRagdoll.new(character: Model): BaseRagdoll.Ragdoll
+function ReplicatedRagdoll.new(character: Model): BaseRagdoll.Ragdoll
 	local trove = Trove.new()
 	local humanoid = character:WaitForChild("Humanoid")
 	humanoid.AutomaticScalingEnabled = false
@@ -42,19 +40,16 @@ function ClientRagdoll.new(character: Model): BaseRagdoll.Ragdoll
 		_motor6Ds = TableUtils.filter(character:GetDescendants(), function(motor: Motor6D)
 			return motor:IsA("Motor6D")
 		end),
-	}, ClientRagdoll)
+	}, ReplicatedRagdoll)
 
 	BaseRagdoll._recordOriginalSettings(self)
 
 	trove:Connect(character:GetAttributeChangedSignal("Ragdolled"), function()
-		--the server has ragdolled us, we dont need to do anything other than manage the humanoid
-		local ragdolled = character:GetAttribute("Ragdolled")
-		if ragdolled == true then
+		if character:GetAttribute("Ragdolled") == true then
 			self:activateRagdollPhysics()
 		else
 			self:deactivateRagdollPhysics()
 		end
-		self.ragdolled = ragdolled
 	end)
 
 	trove:Connect(humanoid.Died, function()
@@ -64,4 +59,6 @@ function ClientRagdoll.new(character: Model): BaseRagdoll.Ragdoll
 	return self
 end
 
-return ClientRagdoll
+export type Ragdoll = BaseRagdoll.Ragdoll
+
+return ReplicatedRagdoll

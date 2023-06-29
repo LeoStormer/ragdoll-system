@@ -7,26 +7,26 @@ local RagdollFactory = require(script.Parent.RagdollFactory)
 -- For activating player ragdolls
 local ragdolls: { [any]: RagdollFactory.Ragdoll? } = {}
 
-function onNPCRagdollAdded(npcModel)
-	ragdolls[npcModel] = RagdollFactory.new(npcModel)
+function onNPCRagdollAdded(ragdollModel)
+	ragdolls[ragdollModel] = RagdollFactory.new(ragdollModel)
 end
 
-function onNPCRagdollRemoved(npcModel)
-	local ragdoll = ragdolls[npcModel]
+function onNPCRagdollRemoved(ragdollModel)
+	local ragdoll = ragdolls[ragdollModel]
 	if not ragdoll then
 		return
 	end
 	ragdoll:destroy()
 end
 
-for _, npcModel in CollectionService:GetTagged("NPCRagdoll") do
-	onNPCRagdollAdded(npcModel)
+for _, ragdollModel in CollectionService:GetTagged("Ragdoll") do
+	onNPCRagdollAdded(ragdollModel)
 end
 
-CollectionService:GetInstanceAddedSignal("NPCRagdoll"):Connect(onNPCRagdollAdded)
-CollectionService:GetInstanceRemovedSignal("NPCRagdoll"):Connect(onNPCRagdollRemoved)
+CollectionService:GetInstanceAddedSignal("Ragdoll"):Connect(onNPCRagdollAdded)
+CollectionService:GetInstanceRemovedSignal("Ragdoll"):Connect(onNPCRagdollRemoved)
 
-local playerRagdolls: { [any]: RagdollFactory.Ragdoll? } = {}
+local playerRagdolls: { [number]: RagdollFactory.Ragdoll? } = {}
 
 function onPlayerAdded(player: Player)
 	player.CharacterAdded:Connect(function(character)
@@ -34,7 +34,9 @@ function onPlayerAdded(player: Player)
 		if ragdoll then
 			ragdoll:Destroy()
 		end
-
+		--for reasons I cant understand the character model literally loses its head
+		--without this wait if you use this system with imediate mode signal behavior
+		task.wait()
 		ragdoll = RagdollFactory.new(character)
 		playerRagdolls[player.UserId] = ragdoll
 		ragdolls[character] = ragdoll
@@ -99,22 +101,22 @@ RagdollSystem.Signals.ActivatePlayerRagdoll:Connect(activateRagdollPhysics)
 RagdollSystem.Signals.DeactivatePlayerRagdoll:Connect(deactivateRagdollPhysics)
 RagdollSystem.Signals.CollapsePlayerRagdoll:Connect(collapseRagdoll)
 
-RagdollSystem.Signals.ActivateRagdoll:Connect(function(npcModel)
-	local ragdoll = ragdolls[npcModel]
+RagdollSystem.Signals.ActivateRagdoll:Connect(function(ragdollModel)
+	local ragdoll = ragdolls[ragdollModel]
 	if ragdoll then
 		ragdoll:activateRagdollPhysics()
 	end
 end)
 
-RagdollSystem.Signals.DeactivateRagdoll:Connect(function(npcModel)
-	local ragdoll = ragdolls[npcModel]
+RagdollSystem.Signals.DeactivateRagdoll:Connect(function(ragdollModel)
+	local ragdoll = ragdolls[ragdollModel]
 	if ragdoll then
 		ragdoll:deactivateRagdollPhysics()
 	end
 end)
 
-RagdollSystem.Signals.CollapseRagdoll:Connect(function(npcModel)
-	local ragdoll = ragdolls[npcModel]
+RagdollSystem.Signals.CollapseRagdoll:Connect(function(ragdollModel)
+	local ragdoll = ragdolls[ragdollModel]
 	if ragdoll then
 		ragdoll:collapse()
 	end

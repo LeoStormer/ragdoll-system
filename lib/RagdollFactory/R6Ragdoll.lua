@@ -75,7 +75,7 @@ local NUM_CONSTRAINTS = 14 -- number of constraints created on an R6 Rig
 local R6Ragdoll = setmetatable({}, BaseRagdoll)
 R6Ragdoll.__index = R6Ragdoll
 
-function R6Ragdoll.new(character): BaseRagdoll.Ragdoll
+function R6Ragdoll.new(character): Ragdoll
 	local self = setmetatable(BaseRagdoll.new(character, NUM_CONSTRAINTS), R6Ragdoll)
 	setupLimbs(self)
 
@@ -96,5 +96,7 @@ function R6Ragdoll.new(character): BaseRagdoll.Ragdoll
 
 	return self
 end
+
+export type Ragdoll = BaseRagdoll.Ragdoll
 
 return R6Ragdoll

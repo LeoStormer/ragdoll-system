@@ -4,7 +4,7 @@ local R6Ragdoll = require(script.R6Ragdoll)
 
 local Ragdoll = {}
 
-function Ragdoll.new(character): BaseRagdoll.Ragdoll
+function Ragdoll.new(character): Ragdoll
 	local isR15 = character:FindFirstChild("RightUpperLeg") ~= nil
 	return if isR15 then R15Ragdoll.new(character) else R6Ragdoll.new(character)
 end

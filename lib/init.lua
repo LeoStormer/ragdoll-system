@@ -1,5 +1,6 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Signal = require(ReplicatedStorage.Packages.Signal)
+local Signal = require(script.Parent.Signal)
+local RagdollFactory = require(script.RagdollFactory)
+
 local RagdollSystem = {
 	Remotes = {
 		ActivateRagdoll = script.Remotes.ActivateRagdollRemote,
@@ -14,6 +15,9 @@ local RagdollSystem = {
 		DeactivatePlayerRagdoll = Signal.new(),
 		CollapsePlayerRagdoll = Signal.new(),
 	},
+	LocalPlayerRagdoll = nil,
 }
+
+export type Ragdoll = RagdollFactory.Ragdoll
 
 return RagdollSystem

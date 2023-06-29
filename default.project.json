@@ -1,39 +1,6 @@
 {
-  "name": "Ragdoll Project",
+  "name": "ragdoll-system",
   "tree": {
-    "$className": "DataModel",
-
-    "ReplicatedStorage": {
-      "$path": "src/shared",
-      "Packages": {
-        "$path": "Packages"
-      }
-    },
-
-    "ServerScriptService": {
-      "Main": {
-        "$path": "src/server"
-      }
-    },
-
-    "StarterPlayer": {
-      "StarterPlayerScripts": {
-        "Main": {
-          "$path": "src/client"
-        }
-      }
-    },
-
-    "Workspace": {
-      "$properties": {
-        "FilteringEnabled": true
-      }
-    },
-    
-    "SoundService": {
-      "$properties": {
-        "RespectFilteringEnabled": true
-      }
-    }
+    "$path": "lib"
   }
 }

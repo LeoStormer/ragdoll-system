@@ -1,9 +1,8 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local TableUtils = require(script.Parent.Parent.TableUtils)
-local Signal = require(ReplicatedStorage.Packages.Signal)
-local Trove = require(ReplicatedStorage.Packages.Trove)
+local Signal = require(script.Parent.Parent.Parent.Signal)
+local Trove = require(script.Parent.Parent.Parent.Trove)
 
 local BaseRagdoll = {}
 BaseRagdoll.__index = BaseRagdoll
@@ -333,6 +332,8 @@ end
 BaseRagdoll.Destroy = BaseRagdoll.destroy
 
 export type Ragdoll = {
+	ragdollBegan: Signal.Signal<()>,
+	ragdollEnded: Signal.Signal<()>,
 	collapsed: boolean,
 	frozen: boolean,
 	ragdolled: boolean,

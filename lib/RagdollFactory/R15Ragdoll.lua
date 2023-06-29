@@ -91,7 +91,7 @@ local NUM_CONSTRAINTS = 38 -- number of constraints created on an R15 Rig, this 
 local R15Ragdoll = setmetatable({}, BaseRagdoll)
 R15Ragdoll.__index = R15Ragdoll
 
-function R15Ragdoll.new(character): BaseRagdoll.Ragdoll
+function R15Ragdoll.new(character): Ragdoll
 	local self = setmetatable(BaseRagdoll.new(character, NUM_CONSTRAINTS), R15Ragdoll)
 	setupCollisionConstraints(self)
 	setupLimbs(self)
@@ -113,5 +113,7 @@ function R15Ragdoll.new(character): BaseRagdoll.Ragdoll
 
 	return self
 end
+
+export type Ragdoll = BaseRagdoll.Ragdoll
 
 return R15Ragdoll

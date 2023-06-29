@@ -1,40 +1,54 @@
 local Players = game:GetService("Players")
 
 local RagdollSystem = require(script.Parent)
-local ClientRagdoll = require(script:WaitForChild("ClientRagdoll"))
+local ReplicatedRagdoll = require(script:WaitForChild("ReplicatedRagdoll"))
 
 local player = Players.LocalPlayer
-local ragdoll = nil
 
 function onCharacterAdded(character)
+	local ragdoll = RagdollSystem.LocalPlayerRagdoll
 	if ragdoll then
 		ragdoll:destroy()
 	end
-	ragdoll = ClientRagdoll.new(character)
+
+	ragdoll = ReplicatedRagdoll.new(character)
+	RagdollSystem.LocalPlayerRagdoll = ragdoll
+	
+	ragdoll.ragdollBegan:Connect(function()
+		(workspace.CurrentCamera).CameraSubject = ragdoll.character:FindFirstChild("Head")
+	end)
+	
+	ragdoll.ragdollEnded:Connect(function()
+		(workspace.CurrentCamera).CameraSubject = ragdoll.humanoid
+	end)
 end
 
 function activateRagdollPhysics()
+	local ragdoll = RagdollSystem.LocalPlayerRagdoll
 	if not ragdoll or ragdoll.ragdolled then
 		return
 	end
-	(workspace.CurrentCamera).CameraSubject = ragdoll.character:FindFirstChild("Head")
+
 	ragdoll:activateRagdollPhysics()
 	RagdollSystem.Remotes.ActivateRagdoll:FireServer()
 end
 
 function deactivateRagdollPhysics()
+	local ragdoll = RagdollSystem.LocalPlayerRagdoll
 	if not ragdoll or not ragdoll.ragdolled then
 		return
 	end
-	(workspace.CurrentCamera).CameraSubject = ragdoll.humanoid
+	
 	ragdoll:deactivateRagdollPhysics()
 	RagdollSystem.Remotes.DeactivateRagdoll:FireServer()
 end
 
 function collapseRagdoll()
+	local ragdoll = RagdollSystem.LocalPlayerRagdoll
 	if not ragdoll then
 		return
 	end
+
 	ragdoll:collapse()
 	RagdollSystem.Remotes.CollapseRagdoll:FireServer()
 end
