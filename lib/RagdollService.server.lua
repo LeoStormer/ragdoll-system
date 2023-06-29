@@ -34,9 +34,11 @@ function onPlayerAdded(player: Player)
 		if ragdoll then
 			ragdoll:Destroy()
 		end
-		--for reasons I cant understand the character model literally loses its head
-		--without this wait if you use this system with imediate mode signal behavior
+
+		--for reasons I dont want to think about, the character model literally loses
+		--its head without this wait if you use this system with imediate mode signal behavior
 		task.wait()
+
 		ragdoll = RagdollFactory.new(character)
 		playerRagdolls[player.UserId] = ragdoll
 		ragdolls[character] = ragdoll

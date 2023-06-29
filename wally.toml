@@ -3,7 +3,7 @@ name = "gallikus/ragdoll-system"
 version = "0.1.0"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
-private = true
+private = false
 description = "A ragdoll implementation on roblox. Works for R6 and R15 out of the box."
 exclude = ["README.md", "roblox.yml", "selene.toml", "dev.project.json", "dev"]
 

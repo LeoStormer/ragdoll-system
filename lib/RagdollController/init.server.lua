@@ -13,11 +13,11 @@ function onCharacterAdded(character)
 
 	ragdoll = ReplicatedRagdoll.new(character)
 	RagdollSystem.LocalPlayerRagdoll = ragdoll
-	
+
 	ragdoll.ragdollBegan:Connect(function()
 		(workspace.CurrentCamera).CameraSubject = ragdoll.character:FindFirstChild("Head")
 	end)
-	
+
 	ragdoll.ragdollEnded:Connect(function()
 		(workspace.CurrentCamera).CameraSubject = ragdoll.humanoid
 	end)
@@ -38,7 +38,7 @@ function deactivateRagdollPhysics()
 	if not ragdoll or not ragdoll.ragdolled then
 		return
 	end
-	
+
 	ragdoll:deactivateRagdollPhysics()
 	RagdollSystem.Remotes.DeactivateRagdoll:FireServer()
 end
