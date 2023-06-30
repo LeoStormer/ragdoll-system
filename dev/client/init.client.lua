@@ -3,20 +3,20 @@ local UserInputService = game:GetService("UserInputService")
 local RagdollSystem = require(ReplicatedStorage.Packages.RagdollSystem)
 
 function collapse()
-	RagdollSystem.Signals.CollapsePlayerRagdoll:Fire()
+	RagdollSystem:collapseLocalRagdoll()
 end
 
 function activate()
-	RagdollSystem.Signals.ActivatePlayerRagdoll:Fire()
+	RagdollSystem:activateLocalRagdoll()
 end
 
 function deactivate()
-	RagdollSystem.Signals.DeactivatePlayerRagdoll:Fire()
+	RagdollSystem:deactivateLocalRagdoll()
 end
 
 function toggle()
-	local ragdoll: RagdollSystem.Ragdoll = RagdollSystem.LocalPlayerRagdoll
-	if ragdoll and ragdoll.ragdolled then
+	local ragdoll = RagdollSystem:getLocalRagdoll()
+	if ragdoll and ragdoll:isRagdolled() then
 		deactivate()
 	else
 		activate()
