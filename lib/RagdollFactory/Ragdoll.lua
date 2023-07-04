@@ -147,7 +147,7 @@ function Ragdoll.new(character: Model, numConstraints: number?)
 			self:deactivateRagdollPhysics()
 		end
 	end)
-	
+
 	return self
 end
 

@@ -46,7 +46,7 @@ local player = Players.LocalPlayer
 function constructRagdoll(character)
 	local ragdoll = ReplicatedRagdoll.new(character)
 	RagdollSystem:setLocalRagdoll(ragdoll)
-	
+
 	ragdoll.RagdollBegan:Connect(function()
 		(workspace.CurrentCamera).CameraSubject = ragdoll.Character:FindFirstChild("Head")
 	end)
@@ -54,7 +54,7 @@ function constructRagdoll(character)
 	ragdoll.RagdollEnded:Connect(function()
 		(workspace.CurrentCamera).CameraSubject = ragdoll.Humanoid
 	end)
-	
+
 	return ragdoll
 end
 

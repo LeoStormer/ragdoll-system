@@ -57,7 +57,7 @@ Blueprint.cframeOverrides = {}
 ]=]
 --selene: allow(unused_variable)
 function Blueprint.satisfiesRequirements(model: Model)
-    error(`satisfiesRequirements() must be defined`)
+	error(`satisfiesRequirements() must be defined`)
 end
 
 --[=[
