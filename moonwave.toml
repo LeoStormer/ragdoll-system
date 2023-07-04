@@ -1,0 +1,19 @@
+title = "Ragdoll System"
+classOrder = [
+    "RagdollSystem",
+    "RagdollFactory",
+    "Ragdoll",
+    "Blueprint"
+]
+
+[home]
+enabled = true
+includeReadme = true
+
+[[home.features]]
+title = "Simple, Convenient"
+description = "Just drop it somewhere both the client and the server can reach it. It works out of the box."
+
+[[home.features]]
+title = "Extendable"
+description = "Using custom characters? The system can be extended to work with custom characters as well."
