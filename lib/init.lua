@@ -60,11 +60,12 @@ local RagdollSystem = {
 }
 
 local collapsed = {}
-RagdollFactory.RagdollConstructed:Connect(function(ragdoll: Ragdoll)
+function registerCollapse(ragdoll: Ragdoll)
 	ragdoll.Collapsed:Connect(function()
-		table.insert(collapsed, { ragdoll, ragdoll.HumanoidRootPart.Position })
+		table.insert(collapsed, { ragdoll, ragdoll.HumanoidRootPart.Position, DateTime.now().UnixTimestampMillis })
 	end)
-end)
+end
+RagdollFactory.RagdollConstructed:Connect(registerCollapse)
 
 --[=[
 	@server
@@ -153,9 +154,7 @@ end
 	Set value of the local player's ragdoll.
 ]=]
 function RagdollSystem:setLocalRagdoll(ragdoll: Ragdoll)
-	ragdoll.Collapsed:Connect(function()
-		table.insert(collapsed, { ragdoll, ragdoll.HumanoidRootPart.Position })
-	end)
+	registerCollapse(ragdoll)
 
 	self._localPlayerRagdoll = ragdoll
 end
@@ -240,10 +239,15 @@ task.defer(function()
 		for i = #collapsed, 1, -1 do
 			local collapsedInfo = collapsed[i]
 			local ragdoll = collapsedInfo[1]
-			local lastPos = collapsedInfo[2]
 			if ragdoll._ragdolled == false then
 				ragdoll._collapsed = false
 				table.remove(collapsed, i)
+				continue
+			end
+
+			local lastPos = collapsedInfo[2]
+			local collapsedStart = collapsedInfo[3]
+			if (now - collapsedStart) / 1000 < RAGDOLL_TIMEOUT_INTERVAL then
 				continue
 			end
 
