@@ -65,6 +65,7 @@ function registerCollapse(ragdoll: Ragdoll)
 		table.insert(collapsed, { ragdoll, ragdoll.HumanoidRootPart.Position, DateTime.now().UnixTimestampMillis })
 	end)
 end
+
 RagdollFactory.RagdollConstructed:Connect(registerCollapse)
 
 --[=[
