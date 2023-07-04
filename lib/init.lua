@@ -1,3 +1,4 @@
+local RunService = game:GetService("RunService")
 local Signal = require(script.Parent.Signal)
 local RagdollFactory = require(script.RagdollFactory)
 
@@ -58,21 +59,29 @@ local RagdollSystem = {
 	_ragdolls = {},
 }
 
+local collapsed = {}
+RagdollFactory.RagdollConstructed:Connect(function(ragdoll: Ragdoll)
+	ragdoll.Collapsed:Connect(function()
+		table.insert(collapsed, { ragdoll, ragdoll.HumanoidRootPart.Position })
+	end)
+end)
+
 --[=[
 	@server
-	creates and caches a ragdoll corresponding to the Model.
+	Creates and caches a ragdoll corresponding to the Model.
 ]=]
-function RagdollSystem:addRagdoll(ragdollModel: Model)
+function RagdollSystem:addRagdoll(ragdollModel: Model): Ragdoll
 	local ragdoll = RagdollFactory.new(ragdollModel)
 	self._ragdolls[ragdollModel] = ragdoll
+	return ragdoll
 end
 
 --[=[
 	@server
 	@private
-	Creates and caches a ragdoll corresponding to the players character.
+	Creates and caches a ragdoll corresponding to the players character if it exists.
 ]=]
-function RagdollSystem:addPlayerRagdoll(player: Player, character: Model?)
+function RagdollSystem:addPlayerRagdoll(player: Player, character: Model?): Ragdoll?
 	local char = if character then character else player.Character
 	if not character then
 		return
@@ -81,6 +90,7 @@ function RagdollSystem:addPlayerRagdoll(player: Player, character: Model?)
 	local ragdoll = RagdollFactory.new(char)
 	self._playerRagdolls[player.UserId] = ragdoll
 	self._ragdolls[char] = ragdoll
+	return ragdoll
 end
 
 --[=[
@@ -115,7 +125,7 @@ end
 
 --[=[
 	@server
-	returns the ragdoll corresponding to the model or nil if there isn't one.
+	Returns the ragdoll corresponding to the model or nil if there isn't one.
 ]=]
 function RagdollSystem:getRagdoll(ragdollModel: Model): Ragdoll?
 	return self._ragdolls[ragdollModel]
@@ -143,9 +153,12 @@ end
 	Set value of the local player's ragdoll.
 ]=]
 function RagdollSystem:setLocalRagdoll(ragdoll: Ragdoll)
+	ragdoll.Collapsed:Connect(function()
+		table.insert(collapsed, { ragdoll, ragdoll.HumanoidRootPart.Position })
+	end)
+
 	self._localPlayerRagdoll = ragdoll
 end
-
 
 --[=[
 	@client
@@ -196,5 +209,60 @@ function RagdollSystem:collapseRagdoll(ragdollModel: Model)
 end
 
 export type Ragdoll = RagdollFactory.Ragdoll
+
+--Motion sensor that deactivates ragdoll physics on collapsed ragdolls that have remained still for 1.5 seconds.
+task.defer(function()
+	local RAGDOLL_TIMEOUT_INTERVAL = 1.5
+	local RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD = 2
+	local startTime
+
+	if RunService:IsServer() then
+		startTime = DateTime.now().UnixTimestampMillis
+		script:SetAttribute("StartTime", startTime)
+	else
+		startTime = script:GetAttribute("StartTime")
+		if not startTime then
+			script:GetAttributeChangedSignal("StartTime"):Wait()
+			startTime = script:GetAttribute("StartTime")
+		end
+	end
+
+	local counter = 0
+	RunService.Heartbeat:Connect(function(_dt)
+		local now = DateTime.now().UnixTimestampMillis
+		local elapsedSeconds = (now - startTime) / 1000
+		local oldCounter = counter
+		counter = elapsedSeconds % RAGDOLL_TIMEOUT_INTERVAL
+		if counter > oldCounter then
+			return
+		end
+
+		for i = #collapsed, 1, -1 do
+			local collapsedInfo = collapsed[i]
+			local ragdoll = collapsedInfo[1]
+			local lastPos = collapsedInfo[2]
+			if ragdoll._ragdolled == false then
+				ragdoll._collapsed = false
+				table.remove(collapsed, i)
+				continue
+			end
+
+			local newPos = ragdoll.HumanoidRootPart.Position
+			local distance = (newPos - lastPos).Magnitude
+			collapsedInfo[2] = newPos
+			if distance >= RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD then
+				continue
+			end
+
+			ragdoll._collapsed = false
+			table.remove(collapsed, i)
+			if ragdoll.Humanoid:GetState() == Enum.HumanoidStateType.Dead then
+				ragdoll:freeze()
+			else
+				ragdoll:deactivateRagdollPhysics()
+			end
+		end
+	end)
+end)
 
 return RagdollSystem

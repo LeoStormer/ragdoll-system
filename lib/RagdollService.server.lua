@@ -1,3 +1,4 @@
+--Driver for the Ragdoll System on ther server
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 
@@ -101,14 +102,14 @@ end
 Players.PlayerAdded:Connect(onPlayerAdded)
 Players.PlayerRemoving:Connect(onPlayerRemoving)
 
-RagdollFactory.BlueprintAdded:Connect(function(blueprint: RagdollFactory.Blueprint)
+RagdollFactory._blueprintAdded:Connect(function(blueprint: RagdollFactory.Blueprint)
 	for model, ragdoll: RagdollSystem.Ragdoll in RagdollSystem._ragdolls do
 		if not blueprint.satisfiesRequirements(model) then
 			continue
 		end
-		
+
 		ragdoll:destroy()
-		local newRagdoll = blueprint.construct(model)
+		local newRagdoll = RagdollFactory.new(model, blueprint)
 		RagdollSystem._ragdolls[model] = newRagdoll
 
 		local player = Players:GetPlayerFromCharacter(model)
@@ -119,4 +120,3 @@ RagdollFactory.BlueprintAdded:Connect(function(blueprint: RagdollFactory.Bluepri
 		RagdollSystem._playerRagdolls[player.UserId] = newRagdoll
 	end
 end)
-

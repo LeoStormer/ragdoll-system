@@ -1,4 +1,5 @@
-local RunService = game:GetService("RunService")
+-- Credit to Rookstun and the Ragdoll Solution: https://devforum.roblox.com/t/ragdoll-solution-r15customizable-ragdolls-for-use-with-layered-clothing/1738685
+-- local RunService = game:GetService("RunService")
 
 local TableUtils = require(script.Parent.Parent.TableUtils)
 local Signal = require(script.Parent.Parent.Parent.Signal)
@@ -49,22 +50,13 @@ local Trove = require(script.Parent.Parent.Parent.Trove)
 		end)
 	```
 ]=]
---[=[
-	@interface SocketSetting
-	@private
-	@within Ragdoll
-	.MaxFrictionTorque number
-	.UpperAngle number
-	.TwistLowerAngle number
-	.TwistUpperAngle number
-]=]
 local Ragdoll = {}
 Ragdoll.__index = Ragdoll
 
 local LIMB_PHYSICAL_PROPERTIES = PhysicalProperties.new(5, 0.7, 0.5, 100, 100)
 local ROOT_PART_PHYSICAL_PROPERTIES = PhysicalProperties.new(0, 0, 0, 0, 0)
-local RAGDOLL_TIMEOUT_INTERVAL = 1.5
-local RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD = 2
+-- local RAGDOLL_TIMEOUT_INTERVAL = 1.5
+-- local RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD = 2
 
 local BALLSOCKETCONSTRAINT_TEMPLATE: BallSocketConstraint = Instance.new("BallSocketConstraint")
 BALLSOCKETCONSTRAINT_TEMPLATE.Enabled = false
@@ -110,6 +102,7 @@ function Ragdoll.new(character: Model, numConstraints: number?)
 		HumanoidRootPart = character:WaitForChild("HumanoidRootPart"),
 		RagdollBegan = trove:Construct(Signal),
 		RagdollEnded = trove:Construct(Signal),
+		Collapsed = trove:Construct(Signal),
 		_collapsed = false,
 		_frozen = false,
 		_ragdolled = false,
@@ -143,13 +136,25 @@ function Ragdoll.new(character: Model, numConstraints: number?)
 		character:SetAttribute("Ragdolled", false)
 	end)
 
+	self._trove:Connect(humanoid.Died, function()
+		self:collapse()
+	end)
+
+	self._trove:Connect(character:GetAttributeChangedSignal("Ragdolled"), function()
+		if character:GetAttribute("Ragdolled") then
+			self:activateRagdollPhysics()
+		else
+			self:deactivateRagdollPhysics()
+		end
+	end)
+	
 	return self
 end
 
 --[=[
-	Records the original settings of the BaseParts, Motor6Ds, Accessory Handles, and Humanoid of the ragdoll. Should never be called outside of the constructor.
 	@private
 	@param ragdoll Ragdoll
+	Records the original settings of the BaseParts, Motor6Ds, Accessory Handles, and Humanoid of the ragdoll.
 ]=]
 function Ragdoll._recordOriginalSettings(ragdoll)
 	local function recordSetting(object: Instance, record)
@@ -197,6 +202,7 @@ end
 	@private
 	@param ragdoll Ragdoll
 	@param constraint Constraint
+	Adds a constraint to the list of constraints.
 ]=]
 function Ragdoll._addConstraint(ragdoll, constraint)
 	constraint.Parent = ragdoll._constraintsFolder
@@ -207,22 +213,22 @@ end
 --[=[
 	@private
 	@param ragdoll Ragdoll
-	@param socketSettingsDictionary { [string]: SocketSetting }
 	@param sourceLimb BasePart
 	@param affectedLimb BasePart
 	@param cframe0 CFrame
 	@param cframe1 CFrame
+	@param socketSettings SocketSettings?
+	Creates the attachments and constraints connecting two parts of the rig.
 ]=]
 function Ragdoll._setupLimb(
 	ragdoll,
-	socketSettingsDictionary,
 	sourceLimb: BasePart,
 	affectedLimb: BasePart,
 	cframe0: CFrame,
-	cframe1: CFrame
+	cframe1: CFrame,
+	socketSettings
 )
-	local noCollisionConstraint =
-		Ragdoll._addConstraint(ragdoll, Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
+	local noCollisionConstraint = Ragdoll._addConstraint(ragdoll, Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
 	noCollisionConstraint.Part0 = sourceLimb
 	noCollisionConstraint.Part1 = affectedLimb
 
@@ -240,13 +246,36 @@ function Ragdoll._setupLimb(
 	socket.LimitsEnabled = true
 	socket.TwistLimitsEnabled = true
 
-	local socketSettings = socketSettingsDictionary[affectedLimb.Name]
 	if socketSettings ~= nil then
 		for key, value in socketSettings do
 			if socket[key] then
 				socket[key] = value
 			end
 		end
+	end
+end
+
+--[=[
+	@private
+	@param ragdoll Ragdoll
+	@param socketSettingsDictionary SocketSettingsDictionary
+	@param cframeOverrides CFrameOverrides
+	Loops through all motor6Ds and attaches their Part1s to the ragdoll.
+	:::caution
+
+	 This function should only be called once. If you use the RagdollFactory it is already called for you.
+
+	:::
+]=]
+function Ragdoll._setupLimbs(ragdoll, socketSettingsDictionary, cframeOverrides)
+	for _, motor6D: Motor6D in ragdoll._motor6Ds do
+		local sourceLimb = motor6D.Part0
+		local affectedLimb = motor6D.Part1
+		local override = cframeOverrides[affectedLimb.Name]
+		local cframe0 = if override then override.C0 else motor6D.C0
+		local cframe1 = if override then override.C1 else motor6D.C1
+		local socketSettings = socketSettingsDictionary[affectedLimb.Name]
+		Ragdoll._setupLimb(ragdoll, sourceLimb, affectedLimb, cframe0, cframe1, socketSettings)
 	end
 end
 
@@ -335,39 +364,40 @@ function Ragdoll:collapse()
 
 	self._collapsed = true
 	self:activateRagdollPhysics()
+	self.Collapsed:Fire()
 
-	local timer = 0
-	local lastPos = self.HumanoidRootPart.Position
+	-- local timer = 0
+	-- local lastPos = self.HumanoidRootPart.Position
 
-	local connection
-	connection = self._trove:Connect(RunService.Heartbeat, function(dt)
-		if not self._ragdolled then
-			self._collapsed = false
-			self._trove:Remove(connection)
-			return
-		end
+	-- local connection
+	-- connection = self._trove:Connect(RunService.Heartbeat, function(dt)
+	-- 	if not self._ragdolled then
+	-- 		self._collapsed = false
+	-- 		self._trove:Remove(connection)
+	-- 		return
+	-- 	end
 
-		timer += dt
-		if timer < RAGDOLL_TIMEOUT_INTERVAL then
-			return
-		end
+	-- 	timer += dt
+	-- 	if timer < RAGDOLL_TIMEOUT_INTERVAL then
+	-- 		return
+	-- 	end
 
-		local newPos = self.HumanoidRootPart.Position
-		local distance = (newPos - lastPos).Magnitude
-		lastPos = newPos
-		timer -= RAGDOLL_TIMEOUT_INTERVAL
-		if distance >= RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD then
-			return
-		end
+	-- 	local newPos = self.HumanoidRootPart.Position
+	-- 	local distance = (newPos - lastPos).Magnitude
+	-- 	lastPos = newPos
+	-- 	timer -= RAGDOLL_TIMEOUT_INTERVAL
+	-- 	if distance >= RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD then
+	-- 		return
+	-- 	end
 
-		self._collapsed = false
-		self._trove:Remove(connection)
-		if self.Humanoid:GetState() == Enum.HumanoidStateType.Dead then
-			self:freeze()
-		else
-			self:deactivateRagdollPhysics()
-		end
-	end)
+	-- 	self._collapsed = false
+	-- 	self._trove:Remove(connection)
+	-- 	if self.Humanoid:GetState() == Enum.HumanoidStateType.Dead then
+	-- 		self:freeze()
+	-- 	else
+	-- 		self:deactivateRagdollPhysics()
+	-- 	end
+	-- end)
 end
 
 --[=[
@@ -400,17 +430,23 @@ function Ragdoll:unfreeze()
 	end
 end
 
---[=[]=]
+--[=[
+	Returns true if ragdoll physics is active on this ragdoll.
+]=]
 function Ragdoll:isRagdolled(): boolean
 	return self._ragdolled
 end
 
---[=[]=]
+--[=[
+	Returns true if the ragdoll has callapsed.
+]=]
 function Ragdoll:isCollapsed(): boolean
 	return self._collapsed
 end
 
---[=[]=]
+--[=[
+	Returns true if the ragdoll is frozen.
+]=]
 function Ragdoll:isFrozen(): boolean
 	return self._frozen
 end
@@ -423,15 +459,19 @@ function Ragdoll:destroy()
 end
 
 --[=[
-	Alias for destroy()
-	@method Destroy
 	@within Ragdoll
+	@method Destroy
+	Alias for destroy().
 ]=]
 Ragdoll.Destroy = Ragdoll.destroy
 
 export type Ragdoll = {
+	Character: Model,
+	Humanoid: Humanoid,
+	HumanoidRootPart: BasePart,
 	RagdollBegan: Signal.Signal<()>,
 	RagdollEnded: Signal.Signal<()>,
+	Collapsed: Signal.Signal<()>,
 	isRagdolled: (self: Ragdoll) -> boolean,
 	isCollapsed: (self: Ragdoll) -> boolean,
 	isFrozen: (self: Ragdoll) -> boolean,

@@ -1,3 +1,4 @@
+--Driver for the Ragdoll System on the client
 local Players = game:GetService("Players")
 
 local RagdollSystem = require(script.Parent)
@@ -42,15 +43,10 @@ RagdollSystem.Signals.CollapsePlayerRagdoll:Connect(collapseRagdoll)
 --Automated Ragdoll Construction
 local player = Players.LocalPlayer
 
-function onCharacterAdded(character)
-	local ragdoll = RagdollSystem:getLocalRagdoll()
-	if ragdoll then
-		ragdoll:destroy()
-	end
-
-	ragdoll = ReplicatedRagdoll.new(character)
+function constructRagdoll(character)
+	local ragdoll = ReplicatedRagdoll.new(character)
 	RagdollSystem:setLocalRagdoll(ragdoll)
-
+	
 	ragdoll.RagdollBegan:Connect(function()
 		(workspace.CurrentCamera).CameraSubject = ragdoll.Character:FindFirstChild("Head")
 	end)
@@ -58,27 +54,29 @@ function onCharacterAdded(character)
 	ragdoll.RagdollEnded:Connect(function()
 		(workspace.CurrentCamera).CameraSubject = ragdoll.Humanoid
 	end)
+	
+	return ragdoll
+end
+
+function onCharacterAdded(character)
+	local ragdoll = RagdollSystem:getLocalRagdoll()
+	if ragdoll then
+		ragdoll:destroy()
+	end
+
+	constructRagdoll(character)
 end
 
 if player.Character then
 	onCharacterAdded(player.Character)
 end
 
-RagdollFactory.BlueprintAdded:Connect(function(blueprint: RagdollFactory.Blueprint)
-	for model, ragdoll: RagdollSystem.Ragdoll in RagdollSystem._ragdolls do
-		if not blueprint.satisfiesRequirements(model) then
-			continue
-		end
+player.CharacterAdded:Connect(onCharacterAdded)
+
+RagdollFactory._blueprintAdded:Connect(function(blueprint: RagdollFactory.Blueprint)
+	local ragdoll = RagdollSystem:getLocalRagdoll()
+	if blueprint.satisfiesRequirements(ragdoll.Character) then
+		constructRagdoll(ragdoll.Character)
 		ragdoll:destroy()
-		local newRagdoll = blueprint.construct(model)
-		RagdollSystem._ragdolls[model] = newRagdoll
-		local characterOwner = Players:GetPlayerFromCharacter(model)
-		if not characterOwner or characterOwner ~= player then
-			return
-		end
-		
-		RagdollSystem:setLocalRagdoll(newRagdoll)
 	end
 end)
-
-player.CharacterAdded:Connect(onCharacterAdded)

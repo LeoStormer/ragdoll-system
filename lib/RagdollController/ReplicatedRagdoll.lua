@@ -20,6 +20,7 @@ function ReplicatedRagdoll.new(character: Model): Ragdoll.Ragdoll
 		HumanoidRootPart = character:WaitForChild("HumanoidRootPart"),
 		RagdollBegan = trove:Construct(Signal),
 		RagdollEnded = trove:Construct(Signal),
+		Collapsed = trove:Construct(Signal),
 		_frozen = false,
 		_ragdolled = false,
 		_collapsed = false,
