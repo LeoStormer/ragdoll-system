@@ -3,11 +3,13 @@ local Signal = require(script.Parent.Parent.Signal)
 local Ragdoll = require(script.Ragdoll)
 local R15RagdollBlueprint = require(script.R15RagdollBlueprint)
 local R6RagdollBlueprint = require(script.R6RagdollBlueprint)
+local ReplicatedRagdoll = require(script.ReplicatedRagdoll)
 
 --[=[
 	@class RagdollFactory
 	@__index RagdollFactory
 ]=]
+
 -- --[=[
 -- 	@within RagdollFactory
 -- 	@private
@@ -15,40 +17,58 @@ local R6RagdollBlueprint = require(script.R6RagdollBlueprint)
 -- 	@prop _blueprintAdded Signal
 -- 	Fires when a blueprint is added to the factory.
 -- ]=]
+
 --[=[
 	@within RagdollFactory
 	@readonly
 	@prop RagdollConstructed Signal
 	Fires when a ragdoll is constructed by the factory.
 ]=]
+
 local RagdollFactory = {}
 RagdollFactory._blueprints = {}
 RagdollFactory._blueprintAdded = Signal.new()
 RagdollFactory.RagdollConstructed = Signal.new()
 
-function RagdollFactory._constructRagdoll(model: Model, blueprint: Blueprint): Ragdoll
-	local ragdoll = Ragdoll.new(model, blueprint.numConstraints)
-	Ragdoll._setupLimbs(ragdoll, blueprint.socketSettings, blueprint.cframeOverrides)
-	blueprint.finalTouches(ragdoll)
-	RagdollFactory.RagdollConstructed:Fire(ragdoll)
-	return ragdoll
+function getMatchingBlueprint(model: Model, blueprintOverride: Blueprint?): Blueprint?
+	if blueprintOverride and blueprintOverride.satisfiesRequirements(model) then
+		return blueprintOverride
+	else
+		for _, backupBlueprint: Blueprint in RagdollFactory._blueprints do
+			if backupBlueprint.satisfiesRequirements(model) then
+				return backupBlueprint
+			end
+		end
+	end
+
+	return nil
 end
 
 --[=[
 	Constructs a ragdoll from a model that satisfies any of its blueprints. Returns nil if no blueprint is satisfied.
 ]=]
-function RagdollFactory.new(model: Model, blueprint: Blueprint?): Ragdoll?
+function RagdollFactory.new(model: Model, blueprintOverride: Blueprint?): Ragdoll?
+	local blueprint = getMatchingBlueprint(model, blueprintOverride)
 	if blueprint then
-		if not blueprint.satisfiesRequirements(model) then
-			error(`{model} did not satisfy blueprint's requirements `)
-		end
-		return RagdollFactory._constructRagdoll(model, blueprint)
+		local ragdoll = Ragdoll.new(model, blueprint)
+		RagdollFactory.RagdollConstructed:Fire(ragdoll)
+		return ragdoll
 	end
 
-	for _, backupBlueprint: Blueprint in RagdollFactory._blueprints do
-		if backupBlueprint.satisfiesRequirements(model) then
-			return RagdollFactory._constructRagdoll(model, backupBlueprint)
-		end
+	return nil
+end
+
+--[=[
+	@client
+	@private
+	Creates a Ragdoll from a model that already has its Constraints constructed. Used to replicate a ragdoll across server -> client boundary.
+]=]
+function RagdollFactory.wrap(ragdollModel: Model, blueprintOverride: Blueprint?): Ragdoll?
+	local blueprint = getMatchingBlueprint(ragdollModel, blueprintOverride)
+	if blueprint then
+		local ragdoll = ReplicatedRagdoll.new(ragdollModel, blueprint)
+		RagdollFactory.RagdollConstructed:Fire(ragdoll)
+		return ragdoll
 	end
 
 	return nil

@@ -69,6 +69,13 @@ end
 RagdollFactory.RagdollConstructed:Connect(registerCollapse)
 
 --[=[
+	Returns the ragdoll corresponding to the model or nil if there isn't one.
+]=]
+function RagdollSystem:getRagdoll(ragdollModel: Model): Ragdoll?
+	return self._ragdolls[ragdollModel]
+end
+
+--[=[
 	@server
 	Creates and caches a ragdoll corresponding to the Model.
 ]=]
@@ -76,6 +83,28 @@ function RagdollSystem:addRagdoll(ragdollModel: Model): Ragdoll
 	local ragdoll = RagdollFactory.new(ragdollModel)
 	self._ragdolls[ragdollModel] = ragdoll
 	return ragdoll
+end
+
+--[=[
+	@server
+	Destroys the ragdoll corresponding to the model and removes it from the cache.
+]=]
+function RagdollSystem:removeRagdoll(ragdollModel: Model)
+	local ragdoll = self._ragdolls[ragdollModel]
+	if not ragdoll then
+		return
+	end
+
+	ragdoll:destroy()
+	self._ragdolls[ragdollModel] = nil
+end
+
+--[=[
+	@server
+	Returns the ragdoll corresponding to player's character or nil if there isnt one.
+]=]
+function RagdollSystem:getPlayerRagdoll(player: Player): Ragdoll?
+	return self._playerRagdolls[player.UserId]
 end
 
 --[=[
@@ -97,20 +126,6 @@ end
 
 --[=[
 	@server
-	Destroys the ragdoll corresponding to the model and removes it from the cache.
-]=]
-function RagdollSystem:removeRagdoll(ragdollModel: Model)
-	local ragdoll = self._ragdolls[ragdollModel]
-	if not ragdoll then
-		return
-	end
-
-	ragdoll:destroy()
-	self._ragdolls[ragdollModel] = nil
-end
-
---[=[
-	@server
 	@private
 	Destroys the ragdoll corresponding to player's character and removes it from the cache.
 ]=]
@@ -126,19 +141,27 @@ function RagdollSystem:removePlayerRagdoll(player: Player)
 end
 
 --[=[
-	@server
-	Returns the ragdoll corresponding to the model or nil if there isn't one.
+	@param ragdollModel Model
+	Activates ragdoll physics on the ragdoll.
 ]=]
-function RagdollSystem:getRagdoll(ragdollModel: Model): Ragdoll?
-	return self._ragdolls[ragdollModel]
+function RagdollSystem:activateRagdoll(ragdollModel: Model)
+	self.Signals.ActivateRagdoll:Fire(ragdollModel)
 end
 
 --[=[
-	@server
-	Returns the ragdoll corresponding to player's character or nil if there isnt one.
+	@param ragdollModel Model
+	Deactivates ragdoll physics on the ragdoll.
 ]=]
-function RagdollSystem:getPlayerRagdoll(player: Player): Ragdoll?
-	return self._playerRagdolls[player.UserId]
+function RagdollSystem:deactivateRagdoll(ragdollModel: Model)
+	self.Signals.DeactivateRagdoll:Fire(ragdollModel)
+end
+
+--[=[
+	@param ragdollModel Model
+	Activates ragdoll physics on the ragdoll, deactivates ragdoll physics after the ragdoll has remained still for 1.5 seconds.
+]=]
+function RagdollSystem:collapseRagdoll(ragdollModel: Model)
+	self.Signals.CollapseRagdoll:Fire(ragdollModel)
 end
 
 --[=[
@@ -155,8 +178,7 @@ end
 	Set value of the local player's ragdoll.
 ]=]
 function RagdollSystem:setLocalRagdoll(ragdoll: Ragdoll)
-	registerCollapse(ragdoll)
-
+	RagdollSystem._ragdolls[ragdoll.Character] = ragdoll
 	self._localPlayerRagdoll = ragdoll
 end
 
@@ -182,30 +204,6 @@ end
 ]=]
 function RagdollSystem:collapseLocalRagdoll()
 	self.Signals.CollapsePlayerRagdoll:Fire()
-end
-
---[=[
-	@param ragdollModel Model
-	Activates ragdoll physics on the ragdoll.
-]=]
-function RagdollSystem:activateRagdoll(ragdollModel: Model)
-	self.Signals.ActivateRagdoll:Fire(ragdollModel)
-end
-
---[=[
-	@param ragdollModel Model
-	Deactivates ragdoll physics on the ragdoll.
-]=]
-function RagdollSystem:deactivateRagdoll(ragdollModel: Model)
-	self.Signals.DeactivateRagdoll:Fire(ragdollModel)
-end
-
---[=[
-	@param ragdollModel Model
-	Activates ragdoll physics on the ragdoll, deactivates ragdoll physics after the ragdoll has remained still for 1.5 seconds.
-]=]
-function RagdollSystem:collapseRagdoll(ragdollModel: Model)
-	self.Signals.CollapseRagdoll:Fire(ragdollModel)
 end
 
 export type Ragdoll = RagdollFactory.Ragdoll

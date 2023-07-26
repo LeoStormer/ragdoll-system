@@ -1,6 +1,6 @@
 local TableUtils = {}
 
-function TableUtils.filter<T>(list, filterfunction: (T) -> boolean): { T }
+function TableUtils.filter<T>(list: { T }, filterfunction: (T) -> boolean): { T }
 	local filteredlist = table.create(#list)
 
 	for _, v in list do

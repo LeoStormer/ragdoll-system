@@ -5,9 +5,9 @@ So you want to create a different type of ragdoll than R15 or R6? No problem cre
 
 ```lua title="MyBlueprint.lua"
     local MyBlueprint = {}
-    MyBlueprint.numConstraints = 38 --Test it, create a ragdoll with your blueprint, print(#ragdoll._constraints) and replace 38 with the number you get.
-    MyBlueprint.socketSettings = {} --The keys are names of BaseParts in your model.
-    MyBlueprint.cframeOverrides = {} --The keys are names of BaseParts in your model.
+    MyBlueprint.numLimbs = 15
+    MyBlueprint.socketSettings = {} --The keys are names of Parts in your model e.g. RightHand, UpperTorso, or Head.
+    MyBlueprint.cframeOverrides = {} --The keys are names of Parts in your model.
 
     function MyBlueprint.satisfiesRequirements(model: Model): boolean
         --How can we tell that model satisfies my blueprint?

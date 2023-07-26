@@ -11,7 +11,7 @@ local LEFT_HIP_ATTACHMENT_CFRAME0 = CFrame.new(-0.5, -1, -0)
 local HIP_ATTACHMENT_CFRAME1 = CFrame.new(0, 1, 0)
 
 local R6RagdollBlueprint = setmetatable({
-	numConstraints = 14, -- number of constraints created on an R6 Rig, this number was tested for
+	numLimbs = 6, -- number of constraints created on an R6 Rig, this number was tested for
 	socketSettings = {
 		Head = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
 		Torso = { MaxFrictionTorque = 50, UpperAngle = 20, TwistLowerAngle = 0, TwistUpperAngle = 30 },

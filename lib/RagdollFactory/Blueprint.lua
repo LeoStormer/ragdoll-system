@@ -23,8 +23,8 @@ local Ragdoll = require(script.Parent.Ragdoll)
 ]=]
 --[=[
 	@within Blueprint
-	@prop numConstraints number?
-	Number of constraints created following this blueprint
+	@prop numlimbs number?
+	Number of limbs your character model has
 	:::tip
 
 	Putting an accurate number can improve the performance of ragdoll construction slightly, although it isn't necessary.
@@ -42,11 +42,17 @@ local Ragdoll = require(script.Parent.Ragdoll)
     Used to change how specific parts in the ragdoll are attached on the ragdoll.
     For example, in the R6 blueprint the arms are overridden to be attached the same way Upper Arms are attached in R15 Characters.
 ]=]
+--[=[
+	@within Blueprint
+	@prop lowDetailModeLimbs { [string]: boolean }?
+	Describes which limbs will be activated in low detail mode.
+]=]
 local Blueprint = {}
 Blueprint.__index = Blueprint
-Blueprint.numConstraints = 38
+Blueprint.numLimbs = 15
 Blueprint.socketSettings = {}
 Blueprint.cframeOverrides = {}
+
 
 --[=[
     @within Blueprint
@@ -67,8 +73,16 @@ end
 --selene: allow(unused_variable)
 function Blueprint.finalTouches(ragdoll) end
 
+--[=[
+	@within Blueprint
+	@function wrap
+	@param model Model
+	@return Ragdoll
+	Creates a ragdoll object from a model that already has its Constraints constructed. Used to replicate a ragdoll across server -> client boundary. 
+]=]
+
 export type Blueprint = {
-	numConstraints: number?,
+	numLimbs: number?,
 	socketSettings: {
 		[string]: {
 			MaxFrictionTorque: number,
@@ -78,6 +92,7 @@ export type Blueprint = {
 		},
 	},
 	cframeOverrides: { [string]: { C0: CFrame, C1: CFrame } }?,
+	lowDetailModeLimbs: { [string]: boolean },
 	satisfiesRequirements: (Model) -> boolean,
 	finalTouches: (Ragdoll.Ragdoll) -> (),
 }

@@ -12,42 +12,27 @@ local LOWER_LEG_SOCKET_SETTINGS =
 local HANDS_FEET_SOCKET_SETTINGS =
 	{ MaxFrictionTorque = 50, UpperAngle = 10, TwistLowerAngle = -45, TwistUpperAngle = 5 }
 
+function insertNoCollisionConstraint(ragdoll, limb0, limb1)
+	local noCollisionConstraint = Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone()
+	noCollisionConstraint.Part0 = limb0
+	noCollisionConstraint.Part1 = limb1
+	table.insert(ragdoll._noCollisionConstraints, noCollisionConstraint)
+	noCollisionConstraint.Parent = ragdoll._noCollisionConstraintFolder
+end
+
 function setupCollisionConstraints(ragdoll)
-	local noCollisionConstraint1 = Ragdoll._addConstraint(ragdoll, Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
-	noCollisionConstraint1.Part0 = ragdoll.Character.RightFoot
-	noCollisionConstraint1.Part1 = ragdoll.Character.RightUpperLeg
-
-	local noCollisionConstraint2 = Ragdoll._addConstraint(ragdoll, Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
-	noCollisionConstraint2.Part0 = ragdoll.Character.RightUpperLeg
-	noCollisionConstraint2.Part1 = ragdoll.Character.UpperTorso
-
-	local noCollisionConstraint3 = Ragdoll._addConstraint(ragdoll, Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
-	noCollisionConstraint3.Part0 = ragdoll.Character.RightLowerLeg
-	noCollisionConstraint3.Part1 = ragdoll.Character.UpperTorso
-
-	local noCollisionConstraint4 = Ragdoll._addConstraint(ragdoll, Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
-	noCollisionConstraint4.Part0 = ragdoll.Character.LeftFoot
-	noCollisionConstraint4.Part1 = ragdoll.Character.LeftUpperLeg
-
-	local noCollisionConstraint5 = Ragdoll._addConstraint(ragdoll, Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
-	noCollisionConstraint5.Part0 = ragdoll.Character.LeftUpperLeg
-	noCollisionConstraint5.Part1 = ragdoll.Character.UpperTorso
-
-	local noCollisionConstraint6 = Ragdoll._addConstraint(ragdoll, Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
-	noCollisionConstraint6.Part0 = ragdoll.Character.LeftLowerLeg
-	noCollisionConstraint6.Part1 = ragdoll.Character.UpperTorso
-
-	local noCollisionConstraint7 = Ragdoll._addConstraint(ragdoll, Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
-	noCollisionConstraint7.Part0 = ragdoll.Character.LeftHand
-	noCollisionConstraint7.Part1 = ragdoll.Character.LeftUpperArm
-
-	local noCollisionConstraint8 = Ragdoll._addConstraint(ragdoll, Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
-	noCollisionConstraint8.Part0 = ragdoll.Character.RightHand
-	noCollisionConstraint8.Part1 = ragdoll.Character.RightUpperArm
+	insertNoCollisionConstraint(ragdoll, ragdoll.Character.RightFoot, ragdoll.Character.RightUpperLeg)
+	insertNoCollisionConstraint(ragdoll, ragdoll.Character.RightUpperLeg, ragdoll.Character.UpperTorso)
+	insertNoCollisionConstraint(ragdoll, ragdoll.Character.RightLowerLeg, ragdoll.Character.UpperTorso)
+	insertNoCollisionConstraint(ragdoll, ragdoll.Character.LeftFoot, ragdoll.Character.LeftUpperLeg)
+	insertNoCollisionConstraint(ragdoll, ragdoll.Character.LeftUpperLeg, ragdoll.Character.UpperTorso)
+	insertNoCollisionConstraint(ragdoll, ragdoll.Character.LeftLowerLeg, ragdoll.Character.UpperTorso)
+	insertNoCollisionConstraint(ragdoll, ragdoll.Character.LeftHand, ragdoll.Character.LeftUpperArm)
+	insertNoCollisionConstraint(ragdoll, ragdoll.Character.RightHand, ragdoll.Character.RightUpperArm)
 end
 
 local R15RagdollBlueprint = setmetatable({
-	numConstraints = 38, -- number of constraints created on an R15 Rig, this number was tested for.
+	numLimbs = 15, -- number of constraints created on an R15 Rig, this number was tested for.
 	socketSettings = {
 		Head = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
 		UpperTorso = { MaxFrictionTorque = 50, UpperAngle = 20, TwistLowerAngle = -10, TwistUpperAngle = 30 },
@@ -69,6 +54,13 @@ local R15RagdollBlueprint = setmetatable({
 		LeftHand = HANDS_FEET_SOCKET_SETTINGS,
 		RightFoot = HANDS_FEET_SOCKET_SETTINGS,
 		LeftFoot = HANDS_FEET_SOCKET_SETTINGS,
+	},
+	lowDetailModeLimbs = {
+		Head = true,
+		RightUpperArm = true,
+		LeftUpperArm = true,
+		RightUpperLeg = true,
+		LeftUpperLeg = true,
 	},
 }, Blueprint)
 
