@@ -5,6 +5,8 @@ local Players = game:GetService("Players")
 local RagdollSystem = require(script.Parent)
 local RagdollFactory = require(script.Parent.RagdollFactory)
 
+local player = Players.LocalPlayer
+
 -- Automated Ragdoll Activation and Deactivation
 function activateLocalRagdollPhysics()
 	local ragdoll = RagdollSystem:getLocalRagdoll()
@@ -40,36 +42,69 @@ RagdollSystem.Signals.ActivatePlayerRagdoll:Connect(activateLocalRagdollPhysics)
 RagdollSystem.Signals.DeactivatePlayerRagdoll:Connect(deactivateLocalRagdollPhysics)
 RagdollSystem.Signals.CollapsePlayerRagdoll:Connect(collapseLocalRagdoll)
 
+function activateRagdollPhysics(ragdoll: RagdollFactory.Ragdoll)
+	if RagdollSystem._activeRagdolls < RagdollSystem._lowDetailThreshold then
+		ragdoll:activateRagdollPhysics()
+	else
+		ragdoll:activateRagdollPhysicsLowDetail()
+	end
+end
+
+function deactivateRagdollPhysics(ragdoll: RagdollFactory.Ragdoll)
+	ragdoll:deactivateRagdollPhysics()
+end
+
+function collapseRagdoll(ragdoll: RagdollFactory.Ragdoll)
+	if RagdollSystem._activeRagdolls < RagdollSystem._lowDetailThreshold then
+		ragdoll:collapse()
+	else
+		ragdoll:collapseLowDetail()
+	end
+end
+
 RagdollSystem.Signals.ActivateRagdoll:Connect(function(ragdollModel)
+	if ragdollModel == player.Character then
+		activateLocalRagdollPhysics()
+		return
+	end
+
 	local ragdoll = RagdollSystem:getRagdoll(ragdollModel)
 	if not ragdoll then
 		return
 	end
 
-	ragdoll:activateRagdollPhysics()
+	activateRagdollPhysics(ragdoll)
 end)
 
-RagdollSystem.Signals.DeactivatePlayerRagdoll:Connect(function(ragdollModel)
+RagdollSystem.Signals.DeactivateRagdoll:Connect(function(ragdollModel)
+	if ragdollModel == player.Character then
+		deactivateLocalRagdollPhysics()
+		return
+	end
+
 	local ragdoll = RagdollSystem:getRagdoll(ragdollModel)
 	if not ragdoll then
 		return
 	end
 
-	ragdoll:deactivateRagdollPhysics()
+	deactivateRagdollPhysics(ragdoll)
 end)
 
 RagdollSystem.Signals.CollapseRagdoll:Connect(function(ragdollModel)
+	if ragdollModel == player.Character then
+		collapseLocalRagdoll()
+		return
+	end
+
 	local ragdoll = RagdollSystem:getRagdoll(ragdollModel)
 	if not ragdoll then
 		return
 	end
 
-	ragdoll:collapse()
+	collapseRagdoll(ragdoll)
 end)
 
 --Automated Ragdoll Construction
-local player = Players.LocalPlayer
-
 function constructLocalRagdoll(character, blueprint: RagdollFactory.Blueprint?)
 	local ragdoll = RagdollFactory.wrap(character, blueprint)
 	RagdollSystem:setLocalRagdoll(ragdoll)
@@ -117,7 +152,7 @@ function onRagdollRemoved(ragdollModel)
 	if ragdoll then
 		ragdoll:destroy()
 	end
-	
+
 	RagdollSystem._ragdolls[ragdollModel] = nil
 end
 

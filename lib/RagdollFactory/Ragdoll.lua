@@ -50,6 +50,12 @@ local Trove = require(script.Parent.Parent.Parent.Trove)
 		end)
 	```
 ]=]
+--[=[
+	@within Ragdoll
+	@readonly
+	@prop Destroying Signal
+	A signal fired when ragdoll:destroy() is called.
+]=]
 local Ragdoll = {}
 Ragdoll.__index = Ragdoll
 
@@ -84,7 +90,7 @@ Ragdoll.ANGULARVELOCITY_TEMPLATE = ANGULARVELOCITY_TEMPLATE
 --[=[
 	@ignore
 ]=]
-function Ragdoll.new(character: Model, numConstraints: number?)
+function Ragdoll.new(character: Model, blueprint)
 	local humanoid = character:WaitForChild("Humanoid")
 	humanoid.AutomaticScalingEnabled = false
 	humanoid.BreakJointsOnDeath = false
@@ -92,41 +98,73 @@ function Ragdoll.new(character: Model, numConstraints: number?)
 	local trove = Trove.new()
 	local constraintsFolder = trove:Add(Instance.new("Folder"))
 	constraintsFolder.Name = "RagdollConstraints"
+	local socketsFolder = Instance.new("Folder")
+	socketsFolder.Name = "BallSocketConstraints"
+	socketsFolder.Parent = constraintsFolder
+	local noCollisionsfolder = Instance.new("Folder")
+	noCollisionsfolder.Name = "NoCollisionConstraints"
+	noCollisionsfolder.Parent = constraintsFolder
 	constraintsFolder.Parent = character
+
 	character:SetAttribute("Ragdolled", false)
 	local children = character:GetChildren()
 
 	local self = setmetatable({
 		Character = character,
 		Humanoid = humanoid,
+		Animator = humanoid:WaitForChild("Animator"),
 		HumanoidRootPart = character:WaitForChild("HumanoidRootPart"),
 		RagdollBegan = trove:Construct(Signal),
 		RagdollEnded = trove:Construct(Signal),
 		Collapsed = trove:Construct(Signal),
+		Destroying = trove:Construct(Signal),
 		_collapsed = false,
 		_frozen = false,
 		_ragdolled = false,
 		_trove = trove,
 		_constraintsFolder = constraintsFolder,
-		_constraints = if numConstraints then table.create(numConstraints) else {},
+		_socketFolder = socketsFolder,
+		_noCollisionConstraintFolder = noCollisionsfolder,
+		_sockets = table.create(blueprint.numLimbs),
+		_noCollisionConstraints = table.create(blueprint.numLimbs),
 		_originalSettings = {},
-		_limbs = TableUtils.filter(children, function(limb: BasePart)
+		_limbs = TableUtils.filter(children, function(limb)
 			return limb:IsA("BasePart") and limb.Name ~= "HumanoidRootPart"
 		end),
 		_accessoryHandles = TableUtils.map(
-			TableUtils.filter(children, function(accessory: Accessory)
+			TableUtils.filter(children, function(accessory)
 				return accessory:IsA("Accessory")
 			end),
 			function(accessory: Accessory)
 				return accessory:FindFirstChild("Handle")
 			end
 		),
-		_motor6Ds = TableUtils.filter(character:GetDescendants(), function(motor: Motor6D)
+		_motor6Ds = TableUtils.filter(character:GetDescendants(), function(motor)
 			return motor:IsA("Motor6D")
 		end),
 	}, Ragdoll)
 
 	Ragdoll._recordOriginalSettings(self)
+
+	Ragdoll._setupLimbs(self, blueprint)
+
+	self._lowDetailModeSockets = if blueprint.lowDetailModeLimbs
+		then TableUtils.filter(self._sockets, function(socket: BallSocketConstraint)
+			return blueprint.lowDetailModeLimbs[socket.Name]
+		end)
+		else self._sockets
+
+	self._lowDetailMotor6Ds = TableUtils.filter(self._motor6Ds, function(motor: Motor6D)
+		return blueprint.lowDetailModeLimbs[(motor.Part1 :: BasePart).Name]
+	end)
+
+	trove:Connect(self.Humanoid.StateChanged, function(_old, new)
+		if self:isRagdolled() and new == Enum.HumanoidStateType.Physics then
+			for _, track: AnimationTrack in self.Animator:GetPlayingAnimationTracks() do
+				track:Stop()
+			end
+		end
+	end)
 
 	self.RagdollBegan:Connect(function()
 		character:SetAttribute("Ragdolled", true)
@@ -136,17 +174,7 @@ function Ragdoll.new(character: Model, numConstraints: number?)
 		character:SetAttribute("Ragdolled", false)
 	end)
 
-	self._trove:Connect(humanoid.Died, function()
-		self:collapse()
-	end)
-
-	self._trove:Connect(character:GetAttributeChangedSignal("Ragdolled"), function()
-		if character:GetAttribute("Ragdolled") then
-			self:activateRagdollPhysics()
-		else
-			self:deactivateRagdollPhysics()
-		end
-	end)
+	blueprint.finalTouches(self)
 
 	return self
 end
@@ -201,18 +229,6 @@ end
 --[=[
 	@private
 	@param ragdoll Ragdoll
-	@param constraint Constraint
-	Adds a constraint to the list of constraints.
-]=]
-function Ragdoll._addConstraint(ragdoll, constraint)
-	constraint.Parent = ragdoll._constraintsFolder
-	table.insert(ragdoll._constraints, constraint)
-	return constraint
-end
-
---[=[
-	@private
-	@param ragdoll Ragdoll
 	@param sourceLimb BasePart
 	@param affectedLimb BasePart
 	@param cframe0 CFrame
@@ -226,26 +242,32 @@ function Ragdoll._setupLimb(
 	affectedLimb: BasePart,
 	cframe0: CFrame,
 	cframe1: CFrame,
-	socketSettings
+	blueprint
 )
-	local noCollisionConstraint = Ragdoll._addConstraint(ragdoll, Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone())
+	local noCollisionConstraint = Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone()
 	noCollisionConstraint.Part0 = sourceLimb
 	noCollisionConstraint.Part1 = affectedLimb
+	table.insert(ragdoll._noCollisionConstraints, noCollisionConstraint)
+	noCollisionConstraint.Parent = ragdoll._noCollisionConstraintFolder
+
+	local attachment0 = ragdoll._trove:Add(Instance.new("Attachment"))
+	attachment0.CFrame = cframe0
+	attachment0.Parent = sourceLimb
 
 	local attachment1 = ragdoll._trove:Add(Instance.new("Attachment"))
-	attachment1.CFrame = cframe0
-	attachment1.Parent = sourceLimb
+	attachment1.CFrame = cframe1
+	attachment1.Parent = affectedLimb
 
-	local attachment2 = ragdoll._trove:Add(Instance.new("Attachment"))
-	attachment2.CFrame = cframe1
-	attachment2.Parent = affectedLimb
-
-	local socket = Ragdoll._addConstraint(ragdoll, Ragdoll.BALLSOCKETCONSTRAINT_TEMPLATE:Clone())
-	socket.Attachment0 = attachment1
-	socket.Attachment1 = attachment2
+	local socket = Ragdoll.BALLSOCKETCONSTRAINT_TEMPLATE:Clone()
+	socket.Name = affectedLimb.Name
+	socket.Attachment0 = attachment0
+	socket.Attachment1 = attachment1
 	socket.LimitsEnabled = true
 	socket.TwistLimitsEnabled = true
+	table.insert(ragdoll._sockets, socket)
+	socket.Parent = ragdoll._socketFolder
 
+	local socketSettings = blueprint.socketSettings[affectedLimb.Name]
 	if socketSettings ~= nil then
 		for key, value in socketSettings do
 			if socket[key] then
@@ -267,16 +289,51 @@ end
 
 	:::
 ]=]
-function Ragdoll._setupLimbs(ragdoll, socketSettingsDictionary, cframeOverrides)
+function Ragdoll._setupLimbs(ragdoll, blueprint)
 	for _, motor6D: Motor6D in ragdoll._motor6Ds do
 		local sourceLimb = motor6D.Part0
 		local affectedLimb = motor6D.Part1
-		local override = cframeOverrides[affectedLimb.Name]
+		local override = blueprint.cframeOverrides[affectedLimb.Name]
 		local cframe0 = if override then override.C0 else motor6D.C0
 		local cframe1 = if override then override.C1 else motor6D.C1
-		local socketSettings = socketSettingsDictionary[affectedLimb.Name]
-		Ragdoll._setupLimb(ragdoll, sourceLimb, affectedLimb, cframe0, cframe1, socketSettings)
+		Ragdoll._setupLimb(ragdoll, sourceLimb, affectedLimb, cframe0, cframe1, blueprint)
 	end
+end
+
+--[=[
+	@ignore
+]=]
+function Ragdoll._activateRagdollPhysics(ragdoll, accessoryHandles, motor6Ds, limbs, noCollisionConstraints, sockets)
+	ragdoll.Humanoid.WalkSpeed = 0
+	ragdoll.Humanoid.AutoRotate = false
+	ragdoll.Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+	ragdoll.HumanoidRootPart.CanCollide = false
+	ragdoll.HumanoidRootPart.CustomPhysicalProperties = ROOT_PART_PHYSICAL_PROPERTIES
+
+	for _, handle in accessoryHandles do
+		handle.CanCollide = false
+		handle.CanTouch = false
+		handle.Massless = true
+	end
+
+	for _, motor6D: Motor6D in motor6Ds do
+		motor6D.Enabled = false
+	end
+
+	for _, limb in limbs do
+		limb.CanCollide = true
+		limb.CustomPhysicalProperties = LIMB_PHYSICAL_PROPERTIES
+	end
+
+	for _, constraint: Constraint in noCollisionConstraints do
+		constraint.Enabled = true
+	end
+
+	for _, socket: Constraint in sockets do
+		socket.Enabled = true
+	end
+
+	ragdoll.RagdollBegan:Fire()
 end
 
 --[=[
@@ -288,32 +345,33 @@ function Ragdoll:activateRagdollPhysics()
 	end
 
 	self._ragdolled = true
-	self.Humanoid.WalkSpeed = 0
-	self.Humanoid.AutoRotate = false
-	self.Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-	self.HumanoidRootPart.CanCollide = false
-	self.HumanoidRootPart.CustomPhysicalProperties = ROOT_PART_PHYSICAL_PROPERTIES
+	Ragdoll._activateRagdollPhysics(
+		self,
+		self._accessoryHandles,
+		self._motor6Ds,
+		self._limbs,
+		self._noCollisionConstraints,
+		self._sockets
+	)
+end
 
-	for _, handle in self._accessoryHandles do
-		handle.CanCollide = false
-		handle.CanTouch = false
-		handle.Massless = true
+--[=[
+	Activates ragdoll physics in low detail mode.
+]=]
+function Ragdoll:activateRagdollPhysicsLowDetail()
+	if self._ragdolled then
+		return
 	end
 
-	for _, motor6D: Motor6D in self._motor6Ds do
-		motor6D.Enabled = false
-	end
-
-	for _, limb in self._limbs do
-		limb.CanCollide = true
-		limb.CustomPhysicalProperties = LIMB_PHYSICAL_PROPERTIES
-	end
-
-	for _, constraint: Constraint in self._constraints do
-		constraint.Enabled = true
-	end
-
-	self.RagdollBegan:Fire()
+	self._ragdolled = true
+	Ragdoll._activateRagdollPhysics(
+		self,
+		self._accessoryHandles,
+		self._lowDetailMotor6Ds,
+		self._limbs,
+		self._noCollisionConstraints,
+		self._lowDetailModeSockets
+	)
 end
 
 --[=[
@@ -347,8 +405,12 @@ function Ragdoll:deactivateRagdollPhysics()
 		limb.CustomPhysicalProperties = self._originalSettings[limb].CustomPhysicalProperties
 	end
 
-	for _, constraint: Constraint in self._constraints do
+	for _, constraint: Constraint in self._noCollisionConstraints do
 		constraint.Enabled = false
+	end
+
+	for _, socket: Constraint in self._sockets do
+		socket.Enabled = false
 	end
 
 	self.RagdollEnded:Fire()
@@ -398,6 +460,19 @@ function Ragdoll:collapse()
 	-- 		self:deactivateRagdollPhysics()
 	-- 	end
 	-- end)
+end
+
+--[=[
+	Activates ragdoll physics in low detail mode, then deactivates it when the ragdoll has remained still for 1.5 seconds.
+]=]
+function Ragdoll:collapseLowDetail()
+	if self._collapsed then
+		return
+	end
+
+	self._collapsed = true
+	self:activateRagdollPhysicsLowDetail()
+	self.Collapsed:Fire()
 end
 
 --[=[
@@ -455,6 +530,7 @@ end
 	Destroys the ragdoll.
 ]=]
 function Ragdoll:destroy()
+	self.Destroying:Fire()
 	self._trove:Destroy()
 end
 
@@ -472,12 +548,15 @@ export type Ragdoll = {
 	RagdollBegan: Signal.Signal<()>,
 	RagdollEnded: Signal.Signal<()>,
 	Collapsed: Signal.Signal<()>,
+	Destroying: Signal.Signal<()>,
 	isRagdolled: (self: Ragdoll) -> boolean,
 	isCollapsed: (self: Ragdoll) -> boolean,
 	isFrozen: (self: Ragdoll) -> boolean,
 	activateRagdollPhysics: (self: Ragdoll) -> (),
+	activateRagdollPhysicsLowDetail: (self: Ragdoll) -> (),
 	deactivateRagdollPhysics: (self: Ragdoll) -> (),
 	collapse: (self: Ragdoll) -> (),
+	collapseLowDetail: (self: Ragdoll) -> (),
 	freeze: (self: Ragdoll) -> (),
 	unfreeze: (self: Ragdoll) -> (),
 	destroy: (self: Ragdoll) -> (),

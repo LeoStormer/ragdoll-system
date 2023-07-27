@@ -54,19 +54,12 @@ local RagdollSystem = {
 		CollapsePlayerRagdoll = Signal.new(),
 	},
 	RagdollFactory = RagdollFactory,
+	_activeRagdolls = 0,
+	_lowDetailThreshold = 15,
 	_localPlayerRagdoll = nil,
 	_playerRagdolls = {},
 	_ragdolls = {},
 }
-
-local collapsed = {}
-function registerCollapse(ragdoll: Ragdoll)
-	ragdoll.Collapsed:Connect(function()
-		table.insert(collapsed, { ragdoll, ragdoll.HumanoidRootPart.Position, DateTime.now().UnixTimestampMillis })
-	end)
-end
-
-RagdollFactory.RagdollConstructed:Connect(registerCollapse)
 
 --[=[
 	Returns the ragdoll corresponding to the model or nil if there isn't one.
@@ -206,7 +199,40 @@ function RagdollSystem:collapseLocalRagdoll()
 	self.Signals.CollapsePlayerRagdoll:Fire()
 end
 
-export type Ragdoll = RagdollFactory.Ragdoll
+local collapsed = {}
+function registerEvents(ragdoll)
+	ragdoll.Collapsed:Connect(function()
+		table.insert(collapsed, { ragdoll, ragdoll.HumanoidRootPart.Position, DateTime.now().UnixTimestampMillis })
+	end)
+
+	ragdoll.RagdollBegan:Connect(function()
+		RagdollSystem._activeRagdolls += 1
+	end)
+
+	ragdoll.RagdollEnded:Connect(function()
+		RagdollSystem._activeRagdolls -= 1
+	end)
+
+	ragdoll.Destroying:Connect(function()
+		if ragdoll:isRagdolled() then
+			RagdollSystem._activeRagdolls -= 1
+		end
+	end)
+
+	ragdoll._trove:Connect(ragdoll.Character:GetAttributeChangedSignal("Ragdolled"), function()
+		if ragdoll.Character:GetAttribute("Ragdolled") then
+			RagdollSystem:activateRagdoll(ragdoll.Character)
+		else
+			RagdollSystem:deactivateRagdoll(ragdoll.Character)
+		end
+	end)
+
+	ragdoll._trove:Connect(ragdoll.Humanoid.Died, function()
+		RagdollSystem:collapseRagdoll(ragdoll.Character)
+	end)
+end
+
+RagdollFactory.RagdollConstructed:Connect(registerEvents)
 
 --Motion sensor that deactivates ragdoll physics on collapsed ragdolls that have remained still for 1.5 seconds.
 task.defer(function()
@@ -267,5 +293,7 @@ task.defer(function()
 		end
 	end)
 end)
+
+export type Ragdoll = RagdollFactory.Ragdoll
 
 return RagdollSystem

@@ -21,10 +21,12 @@ function ReplicatedRagdoll.new(character: Model, blueprint): Ragdoll.Ragdoll
 	local self = setmetatable({
 		Character = character,
 		Humanoid = humanoid,
+		Animator = humanoid:WaitForChild("Animator"),
 		HumanoidRootPart = character:WaitForChild("HumanoidRootPart"),
 		RagdollBegan = trove:Construct(Signal),
 		RagdollEnded = trove:Construct(Signal),
 		Collapsed = trove:Construct(Signal),
+		Destroying = trove:Construct(Signal),
 		_frozen = false,
 		_ragdolled = false,
 		_collapsed = false,
@@ -56,16 +58,16 @@ function ReplicatedRagdoll.new(character: Model, blueprint): Ragdoll.Ragdoll
 		end)
 		else self._sockets
 
-	trove:Connect(character:GetAttributeChangedSignal("Ragdolled"), function()
-		if character:GetAttribute("Ragdolled") == true then
-			self:activateRagdollPhysics()
-		else
-			self:deactivateRagdollPhysics()
-		end
+	self._lowDetailMotor6Ds = TableUtils.filter(self._motor6Ds, function(motor: Motor6D)
+		return blueprint.lowDetailModeLimbs[(motor.Part1 :: BasePart).Name]
 	end)
 
-	trove:Connect(humanoid.Died, function()
-		self:collapse()
+	trove:Connect(self.Humanoid.StateChanged, function(_old, new)
+		if self:isRagdolled() and new == Enum.HumanoidStateType.Physics then
+			for _, track: AnimationTrack in self.Animator:GetPlayingAnimationTracks() do
+				track:Stop()
+			end
+		end
 	end)
 
 	return self

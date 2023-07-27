@@ -6,53 +6,72 @@ local RagdollSystem = require(script.Parent)
 local RagdollFactory = require(script.Parent.RagdollFactory)
 
 --Automated Ragdoll Activation and Deactivation
-function activateRagdollPhysics(player: Player)
-	local ragdoll = RagdollSystem:getPlayerRagdoll(player)
-	if ragdoll then
+function activateRagdollPhysics(ragdoll: RagdollFactory.Ragdoll)
+	if RagdollSystem._activeRagdolls < RagdollSystem._lowDetailThreshold then
 		ragdoll:activateRagdollPhysics()
+	else
+		ragdoll:activateRagdollPhysicsLowDetail()
 	end
 end
 
-function deactivateRagdollPhysics(player: Player)
-	local ragdoll = RagdollSystem:getPlayerRagdoll(player)
-	if ragdoll then
-		ragdoll:deactivateRagdollPhysics()
-	end
+function deactivateRagdollPhysics(ragdoll: RagdollFactory.Ragdoll)
+	ragdoll:deactivateRagdollPhysics()
 end
 
-function collapseRagdoll(player: Player)
-	local ragdoll = RagdollSystem:getPlayerRagdoll(player)
-	if ragdoll then
+function collapseRagdoll(ragdoll: RagdollFactory.Ragdoll)
+	if RagdollSystem._activeRagdolls < RagdollSystem._lowDetailThreshold then
 		ragdoll:collapse()
+	else
+		ragdoll:collapseLowDetail()
 	end
 end
 
-RagdollSystem.Remotes.ActivateRagdoll.OnServerEvent:Connect(activateRagdollPhysics)
-RagdollSystem.Remotes.DeactivateRagdoll.OnServerEvent:Connect(deactivateRagdollPhysics)
-RagdollSystem.Remotes.CollapseRagdoll.OnServerEvent:Connect(collapseRagdoll)
+function activatePlayerRagdollPhysics(player: Player)
+	local ragdoll = RagdollSystem:getPlayerRagdoll(player)
+	if ragdoll then
+		activateRagdollPhysics(ragdoll)
+	end
+end
 
-RagdollSystem.Signals.ActivatePlayerRagdoll:Connect(activateRagdollPhysics)
-RagdollSystem.Signals.DeactivatePlayerRagdoll:Connect(deactivateRagdollPhysics)
-RagdollSystem.Signals.CollapsePlayerRagdoll:Connect(collapseRagdoll)
+function deactivatePlayerRagdollPhysics(player: Player)
+	local ragdoll = RagdollSystem:getPlayerRagdoll(player)
+	if ragdoll then
+		deactivateRagdollPhysics(ragdoll)
+	end
+end
+
+function collapsePlayerRagdoll(player: Player)
+	local ragdoll = RagdollSystem:getPlayerRagdoll(player)
+	if ragdoll then
+		collapseRagdoll(ragdoll)
+	end
+end
+
+RagdollSystem.Remotes.ActivateRagdoll.OnServerEvent:Connect(activatePlayerRagdollPhysics)
+RagdollSystem.Signals.ActivatePlayerRagdoll:Connect(activatePlayerRagdollPhysics)
+RagdollSystem.Remotes.DeactivateRagdoll.OnServerEvent:Connect(deactivatePlayerRagdollPhysics)
+RagdollSystem.Signals.DeactivatePlayerRagdoll:Connect(deactivatePlayerRagdollPhysics)
+RagdollSystem.Remotes.CollapseRagdoll.OnServerEvent:Connect(collapsePlayerRagdoll)
+RagdollSystem.Signals.CollapsePlayerRagdoll:Connect(collapsePlayerRagdoll)
 
 RagdollSystem.Signals.ActivateRagdoll:Connect(function(ragdollModel)
 	local ragdoll = RagdollSystem:getRagdoll(ragdollModel)
 	if ragdoll then
-		ragdoll:activateRagdollPhysics()
+		activateRagdollPhysics(ragdoll)
 	end
 end)
 
 RagdollSystem.Signals.DeactivateRagdoll:Connect(function(ragdollModel)
 	local ragdoll = RagdollSystem:getRagdoll(ragdollModel)
 	if ragdoll then
-		ragdoll:deactivateRagdollPhysics()
+		deactivateRagdollPhysics(ragdoll)
 	end
 end)
 
 RagdollSystem.Signals.CollapseRagdoll:Connect(function(ragdollModel)
 	local ragdoll = RagdollSystem:getRagdoll(ragdollModel)
 	if ragdoll then
-		ragdoll:collapse()
+		collapseRagdoll(ragdoll)
 	end
 end)
 
