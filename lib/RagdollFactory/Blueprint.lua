@@ -1,3 +1,4 @@
+--# selene: allow(unused_variable)
 local Ragdoll = require(script.Parent.Ragdoll)
 --[=[
     @class Blueprint
@@ -60,7 +61,6 @@ Blueprint.cframeOverrides = {}
     @return boolean
     Returns whether the model can be properly constructed by this blueprint.
 ]=]
---selene: allow(unused_variable)
 function Blueprint.satisfiesRequirements(model: Model)
 	error(`satisfiesRequirements() must be defined`)
 end
@@ -69,16 +69,7 @@ end
     @param ragdoll Ragdoll
     Apply final touches to the ragdoll. For example, in the R15 blueprint some extra NoCollisionConstraints are added to make the ragdoll physics flow smoother.
 ]=]
---selene: allow(unused_variable)
 function Blueprint.finalTouches(ragdoll) end
-
---[=[
-	@within Blueprint
-	@function wrap
-	@param model Model
-	@return Ragdoll
-	Creates a ragdoll object from a model that already has its Constraints constructed. Used to replicate a ragdoll across server -> client boundary. 
-]=]
 
 export type Blueprint = {
 	numLimbs: number?,

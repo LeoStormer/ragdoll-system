@@ -87,9 +87,7 @@ ANGULARVELOCITY_TEMPLATE.ReactionTorqueEnabled = false
 ANGULARVELOCITY_TEMPLATE.Enabled = false
 Ragdoll.ANGULARVELOCITY_TEMPLATE = ANGULARVELOCITY_TEMPLATE
 
---[=[
-	@ignore
-]=]
+--@ignore
 function Ragdoll.new(character: Model, blueprint)
 	local humanoid = character:WaitForChild("Humanoid")
 	humanoid.AutomaticScalingEnabled = false
@@ -233,7 +231,7 @@ end
 	@param affectedLimb BasePart
 	@param cframe0 CFrame
 	@param cframe1 CFrame
-	@param socketSettings SocketSettings?
+	@param blueprint Blueprint
 	Creates the attachments and constraints connecting two parts of the rig.
 ]=]
 function Ragdoll._setupLimb(
@@ -280,8 +278,7 @@ end
 --[=[
 	@private
 	@param ragdoll Ragdoll
-	@param socketSettingsDictionary SocketSettingsDictionary
-	@param cframeOverrides CFrameOverrides
+	@param blueprint Blueprint
 	Loops through all motor6Ds and attaches their Part1s to the ragdoll.
 	:::caution
 
@@ -300,9 +297,7 @@ function Ragdoll._setupLimbs(ragdoll, blueprint)
 	end
 end
 
---[=[
-	@ignore
-]=]
+--@ignore
 function Ragdoll._activateRagdollPhysics(ragdoll, accessoryHandles, motor6Ds, limbs, noCollisionConstraints, sockets)
 	ragdoll.Humanoid.WalkSpeed = 0
 	ragdoll.Humanoid.AutoRotate = false
