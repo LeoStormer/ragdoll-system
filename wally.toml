@@ -3,9 +3,10 @@ name = "leostormer/ragdoll-system"
 version = "0.3.0"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
+liscense = "MIT"
 private = false
 description = "A ragdoll implementation on roblox. Works for R6 and R15 out of the box."
-exclude = ["dev", "docs", "roblox.yml", "selene.toml", "moonwave.toml", "dev.project.json", "Plugin"]
+exclude = ["dev", "docs", "roblox.yml", "selene.toml", "moonwave.toml", "dev.project.json", "Plugin", "CHANGELOG.md", "LICENSE"]
 
 [dependencies]
 Signal = "sleitnick/signal@1.5.0"
