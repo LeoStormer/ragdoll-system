@@ -272,11 +272,6 @@ end
 	@param ragdoll Ragdoll
 	@param blueprint Blueprint
 	Loops through all motor6Ds and attaches their Part1s to the ragdoll.
-	:::caution
-
-	 This function should only be called once. If you use the RagdollFactory it is already called for you.
-
-	:::
 ]=]
 function Ragdoll._setupLimbs(ragdoll, blueprint)
 	for _, motor6D: Motor6D in ragdoll._motor6Ds do

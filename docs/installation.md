@@ -17,7 +17,7 @@ Ragdoll System can be installed in two ways.
 
 ```toml title="wally.toml"
 [dependencies]
-RagdollSystem = "leastormer/ragdoll-system@0.2.0"
+RagdollSystem = "leastormer/ragdoll-system@0.3.1"
 ```
 
 - Run `wally install`

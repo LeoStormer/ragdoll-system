@@ -168,7 +168,7 @@ end
 --[=[
 	@client
 	@private
-	Set value of the local player's ragdoll.
+	Sets the local player's ragdoll.
 ]=]
 function RagdollSystem:setLocalRagdoll(ragdoll: Ragdoll)
 	RagdollSystem._ragdolls[ragdoll.Character] = ragdoll
