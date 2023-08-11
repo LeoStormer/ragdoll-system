@@ -62,6 +62,14 @@ function ReplicatedRagdoll.new(character: Model, blueprint): Ragdoll.Ragdoll
 		return blueprint.lowDetailModeLimbs[(motor.Part1 :: BasePart).Name]
 	end)
 
+	trove:Connect(self.Humanoid.StateChanged, function(_old, new)
+		if self:isRagdolled() and new == Enum.HumanoidStateType.Physics then
+			for _, track: AnimationTrack in self.Animator:GetPlayingAnimationTracks() do
+				track:Stop()
+			end
+		end
+	end)
+
 	return self
 end
 

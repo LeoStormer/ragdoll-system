@@ -156,6 +156,14 @@ function Ragdoll.new(character: Model, blueprint)
 		return blueprint.lowDetailModeLimbs[(motor.Part1 :: BasePart).Name]
 	end)
 
+	trove:Connect(self.Humanoid.StateChanged, function(_old, new)
+		if self:isRagdolled() and new == Enum.HumanoidStateType.Physics then
+			for _, track: AnimationTrack in self.Animator:GetPlayingAnimationTracks() do
+				track:Stop()
+			end
+		end
+	end)
+
 	self.RagdollBegan:Connect(function()
 		character:SetAttribute("Ragdolled", true)
 	end)
@@ -291,14 +299,9 @@ end
 
 --@ignore
 function Ragdoll._activateRagdollPhysics(ragdoll, accessoryHandles, motor6Ds, limbs, noCollisionConstraints, sockets)
-	if ragdoll._ragdolled then
-		return
-	end
-
-	ragdoll._ragdolled = true
 	ragdoll.Humanoid.WalkSpeed = 0
 	ragdoll.Humanoid.AutoRotate = false
-	ragdoll.Humanoid:ChangeState(Enum.HumanoidStateType.FallingDown)
+	ragdoll.Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
 	ragdoll.HumanoidRootPart.CanCollide = false
 	ragdoll.HumanoidRootPart.CustomPhysicalProperties = ROOT_PART_PHYSICAL_PROPERTIES
 
@@ -332,6 +335,11 @@ end
 	Activates ragdoll physics.
 ]=]
 function Ragdoll:activateRagdollPhysics()
+	if self._ragdolled then
+		return
+	end
+
+	self._ragdolled = true
 	Ragdoll._activateRagdollPhysics(
 		self,
 		self._accessoryHandles,
@@ -346,6 +354,11 @@ end
 	Activates ragdoll physics in low detail mode.
 ]=]
 function Ragdoll:activateRagdollPhysicsLowDetail()
+	if self._ragdolled then
+		return
+	end
+
+	self._ragdolled = true
 	Ragdoll._activateRagdollPhysics(
 		self,
 		self._accessoryHandles,

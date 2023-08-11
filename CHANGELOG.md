@@ -1,11 +1,5 @@
 # Changelog
 
-## 0.3.1
-### Fixed
-
-- Fixed bug where walking animation would break when movement input was pressed before deactivating ragdoll physics.
-- Fixed bug where fall animation would play while ragdolled if ragdoll physics was activated during humanoid Jumping state.
-
 ## 0.3.0
 ### Changed
 
