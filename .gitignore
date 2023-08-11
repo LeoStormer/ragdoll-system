@@ -5,6 +5,7 @@
 /*.rbxlx.lock
 /*.rbxl.lock
 
+.vscode/
 build
 Packages/
 sourcemap.json
