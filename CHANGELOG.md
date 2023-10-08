@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2
+### Fixed
+
+- Fixed bug where humanoid would leave Physics state if ragdoll was activated from being smacked while in the air.
+
 ## 0.3.1
 ### Fixed
 

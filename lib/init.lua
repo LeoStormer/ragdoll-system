@@ -228,8 +228,14 @@ function registerEvents(ragdoll)
 	end)
 
 	ragdoll._trove:Connect(ragdoll.Humanoid.StateChanged, function(_old, new)
-		if new == Enum.HumanoidStateType.FallingDown and ragdoll:isRagdolled() then
+		if not ragdoll:isRagdolled() then
+			return
+		end
+		
+		if new == Enum.HumanoidStateType.FallingDown then
 			ragdoll.Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+		elseif new ~= Enum.HumanoidStateType.Dead or new ~= Enum.HumanoidStateType.Physics then
+			ragdoll.Humanoid:ChangeState(Enum.HumanoidStateType.FallingDown)
 		end
 	end)
 
