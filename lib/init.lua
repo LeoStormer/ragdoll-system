@@ -199,6 +199,10 @@ function RagdollSystem:collapseLocalRagdoll()
 	self.Signals.CollapsePlayerRagdoll:Fire()
 end
 
+local acceptableRagdollStates = {
+	[Enum.HumanoidStateType.Dead] = true,
+	[Enum.HumanoidStateType.Physics] = true,
+}
 local collapsed = {}
 function registerEvents(ragdoll)
 	ragdoll.Collapsed:Connect(function()
@@ -234,7 +238,7 @@ function registerEvents(ragdoll)
 		
 		if new == Enum.HumanoidStateType.FallingDown then
 			ragdoll.Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-		elseif new ~= Enum.HumanoidStateType.Dead or new ~= Enum.HumanoidStateType.Physics then
+		elseif not acceptableRagdollStates[new] then
 			ragdoll.Humanoid:ChangeState(Enum.HumanoidStateType.FallingDown)
 		end
 	end)

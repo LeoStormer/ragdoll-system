@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.3
+### Fixed
+
+- Fixed a bug introduced in version 0.3.2 that caused a ragdoll's humanoid to constantly flip between Physics State and FallingDown state while ragdolled.
+
 ## 0.3.2
 ### Fixed
 

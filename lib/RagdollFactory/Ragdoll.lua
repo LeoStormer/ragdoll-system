@@ -404,39 +404,6 @@ function Ragdoll:collapse()
 	self._collapsed = true
 	self:activateRagdollPhysics()
 	self.Collapsed:Fire()
-
-	-- local timer = 0
-	-- local lastPos = self.HumanoidRootPart.Position
-
-	-- local connection
-	-- connection = self._trove:Connect(RunService.Heartbeat, function(dt)
-	-- 	if not self._ragdolled then
-	-- 		self._collapsed = false
-	-- 		self._trove:Remove(connection)
-	-- 		return
-	-- 	end
-
-	-- 	timer += dt
-	-- 	if timer < RAGDOLL_TIMEOUT_INTERVAL then
-	-- 		return
-	-- 	end
-
-	-- 	local newPos = self.HumanoidRootPart.Position
-	-- 	local distance = (newPos - lastPos).Magnitude
-	-- 	lastPos = newPos
-	-- 	timer -= RAGDOLL_TIMEOUT_INTERVAL
-	-- 	if distance >= RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD then
-	-- 		return
-	-- 	end
-
-	-- 	self._collapsed = false
-	-- 	self._trove:Remove(connection)
-	-- 	if self.Humanoid:GetState() == Enum.HumanoidStateType.Dead then
-	-- 		self:freeze()
-	-- 	else
-	-- 		self:deactivateRagdollPhysics()
-	-- 	end
-	-- end)
 end
 
 --[=[
