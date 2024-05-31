@@ -60,7 +60,7 @@ local Ragdoll = {}
 Ragdoll.__index = Ragdoll
 
 local LIMB_PHYSICAL_PROPERTIES = PhysicalProperties.new(5, 0.7, 0.5, 100, 100)
-local ROOT_PART_PHYSICAL_PROPERTIES = PhysicalProperties.new(0, 0, 0, 0, 0)
+local ROOT_PART_PHYSICAL_PROPERTIES = PhysicalProperties.new(0.01, 0, 0, 0, 0)
 -- local RAGDOLL_TIMEOUT_INTERVAL = 1.5
 -- local RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD = 2
 
