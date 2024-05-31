@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.4
+### Fixed
+
+- Updated ragdoll root part physical properties to use a valid density value to silence warning.
+
 ## 0.3.3
 ### Fixed
 
