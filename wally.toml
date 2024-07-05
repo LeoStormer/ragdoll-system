@@ -1,11 +1,11 @@
 [package]
-name = "leostormer/ragdoll-system"
+name = "ophidie/ragdoll-system"
 version = "0.3.4"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 liscense = "MIT"
 private = false
-description = "A ragdoll implementation on roblox. Works for R6 and R15 out of the box."
+description = "A ragdoll implementation on roblox. Works for R6 and R15 out of the box. Updated so that ragdolls aren't automatically added."
 exclude = ["dev", "docs", "roblox.yml", "selene.toml", "moonwave.toml", "dev.project.json", "Plugin", "CHANGELOG.md", "LICENSE"]
 
 [dependencies]
