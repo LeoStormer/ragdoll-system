@@ -114,11 +114,11 @@ function onPlayerRemoving(player: Player)
 	RagdollSystem:removePlayerRagdoll(player)
 end
 
-for _, player in Players:GetPlayers() do
-	onPlayerAdded(player)
-end
+-- for _, player in Players:GetPlayers() do
+-- 	onPlayerAdded(player)
+-- end
 
-Players.PlayerAdded:Connect(onPlayerAdded)
+-- Players.PlayerAdded:Connect(onPlayerAdded)
 Players.PlayerRemoving:Connect(onPlayerRemoving)
 
 RagdollFactory._blueprintAdded:Connect(function(blueprint: RagdollFactory.Blueprint)

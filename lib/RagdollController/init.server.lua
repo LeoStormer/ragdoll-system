@@ -138,7 +138,7 @@ if player.Character then
 	onCharacterAdded(player.Character)
 end
 
-player.CharacterAdded:Connect(onCharacterAdded)
+-- player.CharacterAdded:Connect(onCharacterAdded)
 player.CharacterRemoving:Connect(onCharacterRemoving)
 
 function onRagdollAdded(ragdollModel: Model)
