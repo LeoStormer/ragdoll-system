@@ -26,6 +26,13 @@ local R6RagdollBlueprint = setmetatable({
 		["Right Leg"] = { C0 = RIGHT_HIP_ATTACHMENT_CFRAME0, C1 = HIP_ATTACHMENT_CFRAME1 },
 		["Left Leg"] = { C0 = LEFT_HIP_ATTACHMENT_CFRAME0, C1 = HIP_ATTACHMENT_CFRAME1 },
 	},
+	lowDetailModeLimbs = {
+		Head = true,
+		["Right Arm"] = true,
+		["Left Arm"] = true,
+		["Right Leg"] = true,
+		["Left Leg"] = true,
+	},
 }, Blueprint)
 
 function R6RagdollBlueprint.satisfiesRequirements(model: Model): boolean
