@@ -152,9 +152,11 @@ function Ragdoll.new(character: Model, blueprint)
 		end)
 		else self._sockets
 
-	self._lowDetailMotor6Ds = TableUtils.filter(self._motor6Ds, function(motor: Motor6D)
-		return blueprint.lowDetailModeLimbs[(motor.Part1 :: BasePart).Name]
-	end)
+	self._lowDetailMotor6Ds = if blueprint.lowDetailModeLimbs
+		then TableUtils.filter(self._motor6Ds, function(motor: Motor6D)
+			return blueprint.lowDetailModeLimbs[(motor.Part1 :: BasePart).Name]
+		end)
+		else self._motor6Ds
 
 	self.RagdollBegan:Connect(function()
 		character:SetAttribute("Ragdolled", true)
