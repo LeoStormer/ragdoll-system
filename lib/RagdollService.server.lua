@@ -99,10 +99,10 @@ function onPlayerAdded(player: Player)
 		end
 
 		--for reasons I dont want to think about, the character model literally loses
-		--its head without this wait if you use this system with imediate mode signal behavior
-		task.wait()
-
-		RagdollSystem:addPlayerRagdoll(player, character)
+		--its head without this defer* if you use this system with imediate mode signal behavior
+		task.defer(function()
+			RagdollSystem:addPlayerRagdoll(player, character)
+		end)
 	end)
 
 	player.CharacterRemoving:Connect(function(_character)
