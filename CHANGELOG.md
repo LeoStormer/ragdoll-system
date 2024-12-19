@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.5
+### Fixed
+
+- Fixed a bug where Ragdoll class was not treating Blueprint.lowDetailModeLimbs as an optional value.
+
 ## 0.3.4
 ### Fixed
 
