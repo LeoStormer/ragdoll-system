@@ -142,12 +142,20 @@ player.CharacterAdded:Connect(onCharacterAdded)
 player.CharacterRemoving:Connect(onCharacterRemoving)
 
 function onRagdollAdded(ragdollModel: Model)
+	if ragdollModel == player.Character then
+		return
+	end
+
 	ragdollModel:WaitForChild("Humanoid")
 	local ragdoll = RagdollFactory.wrap(ragdollModel)
 	RagdollSystem._ragdolls[ragdollModel] = ragdoll
 end
 
 function onRagdollRemoved(ragdollModel)
+	if ragdollModel == player.Character then
+		return
+	end
+
 	local ragdoll = RagdollSystem:getRagdoll(ragdollModel)
 	if ragdoll then
 		ragdoll:destroy()

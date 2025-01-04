@@ -77,7 +77,28 @@ end)
 
 --Automated Ragdoll Construction
 function onRagdollAdded(ragdollModel)
-	RagdollSystem:addRagdoll(ragdollModel)
+	local player = Players:GetPlayerFromCharacter(ragdollModel)
+
+	if player then
+		local ragdoll = RagdollSystem:getPlayerRagdoll(player)
+		if ragdoll then
+			ragdoll:Destroy()
+		end
+
+		--for reasons I dont want to think about, the character model literally loses
+		--its head without this defer* if you use this system with imediate mode signal behavior
+		task.defer(function()
+			RagdollSystem:addPlayerRagdoll(player, ragdollModel)
+		end)
+
+		ragdollModel.AncestryChanged:Connect(function()
+			if not ragdollModel:IsDescendantOf(workspace) then
+				RagdollSystem:removePlayerRagdoll(player)
+			end
+		end)
+	else
+		RagdollSystem:addRagdoll(ragdollModel)
+	end
 end
 
 function onRagdollRemoved(ragdollModel)
@@ -93,20 +114,7 @@ CollectionService:GetInstanceRemovedSignal("Ragdoll"):Connect(onRagdollRemoved)
 
 function onPlayerAdded(player: Player)
 	player.CharacterAdded:Connect(function(character)
-		local ragdoll = RagdollSystem:getPlayerRagdoll(player)
-		if ragdoll then
-			ragdoll:Destroy()
-		end
-
-		--for reasons I dont want to think about, the character model literally loses
-		--its head without this defer* if you use this system with imediate mode signal behavior
-		task.defer(function()
-			RagdollSystem:addPlayerRagdoll(player, character)
-		end)
-	end)
-
-	player.CharacterRemoving:Connect(function(_character)
-		RagdollSystem:removePlayerRagdoll(player)
+		character:AddTag("Ragdoll")
 	end)
 end
 
