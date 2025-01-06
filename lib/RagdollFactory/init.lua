@@ -3,7 +3,6 @@ local Signal = require(script.Parent.Parent.Signal)
 local Ragdoll = require(script.Ragdoll)
 local R15RagdollBlueprint = require(script.R15RagdollBlueprint)
 local R6RagdollBlueprint = require(script.R6RagdollBlueprint)
-local ReplicatedRagdoll = require(script.ReplicatedRagdoll)
 
 --[=[
 	@class RagdollFactory
@@ -66,7 +65,7 @@ end
 function RagdollFactory.wrap(ragdollModel: Model, blueprintOverride: Blueprint?): Ragdoll?
 	local blueprint = getMatchingBlueprint(ragdollModel, blueprintOverride)
 	if blueprint then
-		local ragdoll = ReplicatedRagdoll.new(ragdollModel, blueprint)
+		local ragdoll = Ragdoll.replicate(ragdollModel, blueprint)
 		RagdollFactory.RagdollConstructed:Fire(ragdoll)
 		return ragdoll
 	end

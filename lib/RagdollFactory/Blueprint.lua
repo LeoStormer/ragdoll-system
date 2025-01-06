@@ -1,5 +1,5 @@
 --# selene: allow(unused_variable)
-local Ragdoll = require(script.Parent.Ragdoll)
+local Types = require(script.Parent.Parent.Types)
 --[=[
     @class Blueprint
     @__index Blueprint
@@ -69,22 +69,8 @@ end
     @param ragdoll Ragdoll
     Apply final touches to the ragdoll. For example, in the R15 blueprint some extra NoCollisionConstraints are added to make the ragdoll physics flow smoother.
 ]=]
-function Blueprint.finalTouches(ragdoll) end
+function Blueprint.finalTouches(ragdoll: Types.Ragdoll & Types.RagdollInternals) end
 
-export type Blueprint = {
-	numLimbs: number?,
-	socketSettings: {
-		[string]: {
-			MaxFrictionTorque: number,
-			UpperAngle: number,
-			TwistLowerAngle: number,
-			TwistUpperAngle: number,
-		},
-	},
-	cframeOverrides: { [string]: { C0: CFrame, C1: CFrame } }?,
-	lowDetailModeLimbs: { [string]: boolean },
-	satisfiesRequirements: (Model) -> boolean,
-	finalTouches: (Ragdoll.Ragdoll) -> (),
-}
+export type Blueprint = Types.Blueprint
 
 return Blueprint

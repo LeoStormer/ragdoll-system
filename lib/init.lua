@@ -1,6 +1,7 @@
 local RunService = game:GetService("RunService")
 local Signal = require(script.Parent.Signal)
 local RagdollFactory = require(script.RagdollFactory)
+local Types = require(script.Types)
 
 --[=[
 	@class RagdollSystem
@@ -23,9 +24,9 @@ local RagdollFactory = require(script.RagdollFactory)
 	@within RagdollSystem
 	@private
 	@interface Signals
-	.ActivatePlayerRagdoll Signal
-	.DeactivatePlayerRagdoll Signal
-	.CollapsePlayerRagdoll Signal
+	.ActivateLocalRagdoll Signal
+	.DeactivateLocalRagdoll Signal
+	.CollapseLocalRagdoll Signal
 	.ActivateRagdoll Signal
 	.DeactivateRagdoll Signal
 	.CollapseRagdoll Signal
@@ -39,98 +40,38 @@ local RagdollFactory = require(script.RagdollFactory)
 	@within RagdollSystem
 	@prop RagdollFactory RagdollFactory
 ]=]
-local RagdollSystem = {
-	Remotes = {
-		ActivateRagdoll = script.Remotes.ActivateRagdollRemote,
-		DeactivateRagdoll = script.Remotes.DeactivateRagdollRemote,
-		CollapseRagdoll = script.Remotes.CollapseRagdollRemote,
-	},
-	Signals = {
-		ActivateRagdoll = Signal.new(),
-		DeactivateRagdoll = Signal.new(),
-		CollapseRagdoll = Signal.new(),
-		ActivatePlayerRagdoll = Signal.new(),
-		DeactivatePlayerRagdoll = Signal.new(),
-		CollapsePlayerRagdoll = Signal.new(),
-	},
-	RagdollFactory = RagdollFactory,
-	_activeRagdolls = 0,
-	_lowDetailThreshold = 15,
-	_localPlayerRagdoll = nil,
-	_playerRagdolls = {},
-	_ragdolls = {},
+--[=[
+	@within RagdollSystem
+	@readonly
+	@prop RagdollConstructed Signal
+	Fires when a ragdoll is constructed by the factory.
+]=]
+local RagdollSystem = {}
+RagdollSystem.Remotes = {
+	ActivateRagdoll = script.Remotes.ActivateRagdollRemote,
+	DeactivateRagdoll = script.Remotes.DeactivateRagdollRemote,
+	CollapseRagdoll = script.Remotes.CollapseRagdollRemote,
 }
+RagdollSystem.Signals = {
+	ActivateRagdoll = Signal.new(),
+	DeactivateRagdoll = Signal.new(),
+	CollapseRagdoll = Signal.new(),
+	ActivateLocalRagdoll = Signal.new(),
+	DeactivateLocalRagdoll = Signal.new(),
+	CollapseLocalRagdoll = Signal.new(),
+}
+RagdollSystem.RagdollFactory = RagdollFactory
+RagdollSystem.RagdollConstructed = RagdollFactory.RagdollConstructed
+RagdollSystem._activeRagdolls = 0
+RagdollSystem._lowDetailThreshold = 15
+RagdollSystem._localPlayerRagdoll = nil
+RagdollSystem._ragdolls = {}
 
 --[=[
 	Returns the ragdoll corresponding to the model or nil if there isn't one.
 ]=]
 function RagdollSystem:getRagdoll(ragdollModel: Model): Ragdoll?
 	return self._ragdolls[ragdollModel]
-end
-
---[=[
-	@server
-	Creates and caches a ragdoll corresponding to the Model.
-]=]
-function RagdollSystem:addRagdoll(ragdollModel: Model): Ragdoll
-	local ragdoll = RagdollFactory.new(ragdollModel)
-	self._ragdolls[ragdollModel] = ragdoll
-	return ragdoll
-end
-
---[=[
-	@server
-	Destroys the ragdoll corresponding to the model and removes it from the cache.
-]=]
-function RagdollSystem:removeRagdoll(ragdollModel: Model)
-	local ragdoll = self._ragdolls[ragdollModel]
-	if not ragdoll then
-		return
-	end
-
-	ragdoll:destroy()
-	self._ragdolls[ragdollModel] = nil
-end
-
---[=[
-	@server
-	Returns the ragdoll corresponding to player's character or nil if there isnt one.
-]=]
-function RagdollSystem:getPlayerRagdoll(player: Player): Ragdoll?
-	return self._playerRagdolls[player.UserId]
-end
-
---[=[
-	@server
-	@private
-	Creates and caches a ragdoll corresponding to the players character if it exists.
-]=]
-function RagdollSystem:addPlayerRagdoll(player: Player, character: Model?): Ragdoll?
-	local char = if character then character else player.Character
-	if not character then
-		return
-	end
-
-	local ragdoll = RagdollFactory.new(char)
-	self._playerRagdolls[player.UserId] = ragdoll
-	self._ragdolls[char] = ragdoll
-	return ragdoll
-end
-
---[=[
-	@server
-	@private
-	Destroys the ragdoll corresponding to player's character and removes it from the cache.
-]=]
-function RagdollSystem:removePlayerRagdoll(player: Player)
-	local ragdoll = self._playerRagdolls[player.UserId]
-	if not ragdoll then
-		return
-	end
-
-	self._playerRagdolls[player.UserId] = nil
-	self._ragdolls[ragdoll.Character] = nil
-	ragdoll:destroy()
 end
 
 --[=[
@@ -158,6 +99,50 @@ function RagdollSystem:collapseRagdoll(ragdollModel: Model)
 end
 
 --[=[
+	@param ragdollModel Model
+	@param blueprint Blueprint?
+	Creates and caches a ragdoll corresponding to the Model.
+]=]
+function RagdollSystem:addRagdoll(ragdollModel: Model, blueprint: Types.Blueprint?): Ragdoll
+	local ragdoll = RagdollFactory.new(ragdollModel, blueprint)
+	self._ragdolls[ragdollModel] = ragdoll
+	return ragdoll
+end
+
+--[=[
+	@param ragdollModel Model
+	@param blueprint Blueprint?
+	Creates and caches a Ragdoll from a model that already has its Constraints constructed.
+]=]
+function RagdollSystem:replicateRagdoll(ragdollModel: Model, blueprint: Types.Blueprint?)
+	local ragdoll = RagdollFactory.wrap(ragdollModel, blueprint)
+	self._ragdolls[ragdollModel] = ragdoll
+	return ragdoll
+end
+
+--[=[
+	@param ragdollModel Model
+	Destroys the ragdoll corresponding to the model and removes it from the cache.
+]=]
+function RagdollSystem:removeRagdoll(ragdollModel: Model)
+	local ragdoll = self._ragdolls[ragdollModel]
+	if not ragdoll then
+		return
+	end
+
+	ragdoll:destroy()
+	self._ragdolls[ragdollModel] = nil
+end
+
+--[=[
+	@param player Player
+	Returns the ragdoll corresponding to player's character or nil if there isnt one.
+]=]
+function RagdollSystem:getPlayerRagdoll(player: Player): Ragdoll?
+	return self._ragdolls[player.Character]
+end
+
+--[=[
 	@client
 	Returns the ragdoll coresponding to the local player's character.
 ]=]
@@ -171,7 +156,6 @@ end
 	Sets the local player's ragdoll.
 ]=]
 function RagdollSystem:setLocalRagdoll(ragdoll: Ragdoll)
-	RagdollSystem._ragdolls[ragdoll.Character] = ragdoll
 	self._localPlayerRagdoll = ragdoll
 end
 
@@ -180,7 +164,7 @@ end
 	Activates ragdoll physics on the local player's ragdoll.
 ]=]
 function RagdollSystem:activateLocalRagdoll()
-	self.Signals.ActivatePlayerRagdoll:Fire()
+	self.Signals.ActivateLocalRagdoll:Fire()
 end
 
 --[=[
@@ -188,7 +172,7 @@ end
 	Deactivates ragdoll physics on the local player's ragdoll.
 ]=]
 function RagdollSystem:deactivateLocalRagdoll()
-	self.Signals.DeactivatePlayerRagdoll:Fire()
+	self.Signals.DeactivateLocalRagdoll:Fire()
 end
 
 --[=[
@@ -196,17 +180,13 @@ end
 	Activates ragdoll physics on the local player's ragdoll, deactivates ragdoll physics after the ragdoll has remained still for 1.5 seconds.
 ]=]
 function RagdollSystem:collapseLocalRagdoll()
-	self.Signals.CollapsePlayerRagdoll:Fire()
+	self.Signals.CollapseLocalRagdoll:Fire()
 end
 
-local acceptableRagdollStates = {
-	[Enum.HumanoidStateType.Dead] = true,
-	[Enum.HumanoidStateType.Physics] = true,
-}
 local collapsed = {}
 function registerEvents(ragdoll)
 	ragdoll.Collapsed:Connect(function()
-		table.insert(collapsed, { ragdoll, ragdoll.HumanoidRootPart.Position, DateTime.now().UnixTimestampMillis })
+		table.insert(collapsed, { ragdoll, ragdoll.HumanoidRootPart.Position, workspace:GetServerTimeNow() })
 	end)
 
 	ragdoll.RagdollBegan:Connect(function()
@@ -231,18 +211,6 @@ function registerEvents(ragdoll)
 		end
 	end)
 
-	ragdoll._trove:Connect(ragdoll.Humanoid.StateChanged, function(_old, new)
-		if not ragdoll:isRagdolled() then
-			return
-		end
-		
-		if new == Enum.HumanoidStateType.FallingDown then
-			ragdoll.Humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-		elseif not acceptableRagdollStates[new] then
-			ragdoll.Humanoid:ChangeState(Enum.HumanoidStateType.FallingDown)
-		end
-	end)
-
 	ragdoll._trove:Connect(ragdoll.Humanoid.Died, function()
 		RagdollSystem:collapseRagdoll(ragdoll.Character)
 	end)
@@ -257,7 +225,7 @@ task.defer(function()
 	local startTime
 
 	if RunService:IsServer() then
-		startTime = DateTime.now().UnixTimestampMillis
+		startTime = workspace:GetServerTimeNow()
 		script:SetAttribute("StartTime", startTime)
 	else
 		startTime = script:GetAttribute("StartTime")
@@ -269,8 +237,8 @@ task.defer(function()
 
 	local counter = 0
 	RunService.Heartbeat:Connect(function(_dt)
-		local now = DateTime.now().UnixTimestampMillis
-		local elapsedSeconds = (now - startTime) / 1000
+		local now = workspace:GetServerTimeNow()
+		local elapsedSeconds = (now - startTime)
 		local oldCounter = counter
 		counter = elapsedSeconds % RAGDOLL_TIMEOUT_INTERVAL
 		if counter > oldCounter then
@@ -288,7 +256,7 @@ task.defer(function()
 
 			local lastPos = collapsedInfo[2]
 			local collapsedStart = collapsedInfo[3]
-			if (now - collapsedStart) / 1000 < RAGDOLL_TIMEOUT_INTERVAL then
+			if (now - collapsedStart) < RAGDOLL_TIMEOUT_INTERVAL then
 				continue
 			end
 
@@ -310,6 +278,6 @@ task.defer(function()
 	end)
 end)
 
-export type Ragdoll = RagdollFactory.Ragdoll
+export type Ragdoll = Types.Ragdoll
 
 return RagdollSystem
