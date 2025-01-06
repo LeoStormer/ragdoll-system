@@ -36,7 +36,7 @@ end)
 
 RagdollSystem.Remotes.DeactivateRagdoll.OnServerEvent:Connect(function(player: Player)
 	local ragdoll = RagdollSystem:getPlayerRagdoll(player)
-	if ragdoll then
+	if ragdoll and ragdoll.Humanoid:GetState() ~= Enum.HumanoidStateType.Dead then
 		deactivateRagdollPhysics(ragdoll)
 	end
 end)
