@@ -68,6 +68,7 @@ RagdollSystem._localPlayerRagdoll = nil
 RagdollSystem._ragdolls = {}
 
 --[=[
+	@param ragdollModel Model
 	Returns the ragdoll corresponding to the model or nil if there isn't one.
 ]=]
 function RagdollSystem:getRagdoll(ragdollModel: Model): Ragdoll?
@@ -184,9 +185,32 @@ function RagdollSystem:collapseLocalRagdoll()
 end
 
 local collapsed = {}
+local ragdollMap = {}
+local function removeFromLoop(ragdoll)
+	local index = ragdollMap[ragdoll]
+	if not index then
+		return
+	end
+
+	local lastIndex = #collapsed
+	local temp = collapsed[lastIndex]
+	collapsed[index] = temp
+	ragdollMap[temp.Ragdoll] = index
+	collapsed[lastIndex] = nil
+	ragdollMap[ragdoll] = nil
+end
+
 function registerEvents(ragdoll)
 	ragdoll.Collapsed:Connect(function()
-		table.insert(collapsed, { ragdoll, ragdoll.HumanoidRootPart.Position, workspace:GetServerTimeNow() })
+		table.insert(
+			collapsed,
+			{
+				Ragdoll = ragdoll,
+				RootPosition = ragdoll.HumanoidRootPart.Position,
+				StartTime = workspace:GetServerTimeNow(),
+			}
+		)
+		ragdollMap[ragdoll] = #collapsed
 	end)
 
 	ragdoll.RagdollBegan:Connect(function()
@@ -195,12 +219,14 @@ function registerEvents(ragdoll)
 
 	ragdoll.RagdollEnded:Connect(function()
 		RagdollSystem._activeRagdolls -= 1
+		removeFromLoop(ragdoll)
 	end)
 
 	ragdoll.Destroying:Connect(function()
 		if ragdoll:isRagdolled() then
 			RagdollSystem._activeRagdolls -= 1
 		end
+		removeFromLoop(ragdoll)
 	end)
 
 	ragdoll._trove:Connect(ragdoll.Character:GetAttributeChangedSignal("Ragdolled"), function()
@@ -247,28 +273,22 @@ task.defer(function()
 
 		for i = #collapsed, 1, -1 do
 			local collapsedInfo = collapsed[i]
-			local ragdoll = collapsedInfo[1]
-			if ragdoll._ragdolled == false then
-				ragdoll._collapsed = false
-				table.remove(collapsed, i)
-				continue
-			end
-
-			local lastPos = collapsedInfo[2]
-			local collapsedStart = collapsedInfo[3]
+			local ragdoll = collapsedInfo.Ragdoll
+			local lastPos = collapsedInfo.RootPosition
+			local collapsedStart = collapsedInfo.StartTime
 			if (now - collapsedStart) < RAGDOLL_TIMEOUT_INTERVAL then
 				continue
 			end
 
 			local newPos = ragdoll.HumanoidRootPart.Position
 			local distance = (newPos - lastPos).Magnitude
-			collapsedInfo[2] = newPos
+			collapsedInfo.RootPosition = newPos
 			if distance >= RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD then
 				continue
 			end
 
 			ragdoll._collapsed = false
-			table.remove(collapsed, i)
+			removeFromLoop(ragdoll)
 			if ragdoll.Humanoid:GetState() == Enum.HumanoidStateType.Dead then
 				ragdoll:freeze()
 			else
