@@ -180,7 +180,11 @@ function constructRagdoll(
 			else motor6Ds,
 	}, Ragdoll)
 
-	trove:Connect(humanoid.StateChanged, function(_old, new)
+	trove:Connect(humanoid.StateChanged, function(old, new)
+		if old == Enum.HumanoidStateType.Dead then
+			ragdoll:unfreeze()
+		end
+
 		if not ragdoll:isRagdolled() then
 			return
 		end
@@ -447,6 +451,7 @@ function Ragdoll:deactivateRagdollPhysics()
 	end
 
 	self._ragdolled = false
+	self._collapsed = false
 	self.Humanoid.WalkSpeed = self._originalSettings[self.Humanoid].WalkSpeed
 	self.Humanoid.AutoRotate = self._originalSettings[self.Humanoid].AutoRotate
 	self.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
