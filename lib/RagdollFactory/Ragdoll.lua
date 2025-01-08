@@ -17,7 +17,7 @@ local Trove = require(script.Parent.Parent.Parent.Trove)
 	._constraintsFolder Folder -- Root Folder
 	._noCollisionConstraintFolder Folder -- Parent Folder to the Ragdoll's NoCollisionConstraints
 	._socketFolder Folder -- Parent folder to the Ragdoll's BallSocketConstraints
-	._noCollisionConstraints { NoCollisionConstraints }.
+	._noCollisionConstraints { NoCollisionConstraint }.
 	._sockets  { BallSocketConstraint }
 	._limbs { BasePart } -- List of the Ragdoll's direct children BaseParts exluding the root part. 
 	._accessoryHandles { BasePart }

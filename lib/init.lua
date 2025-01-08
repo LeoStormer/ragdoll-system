@@ -126,7 +126,7 @@ end
 	@client
 	Creates and caches a Ragdoll from a model that already has its Constraints constructed.
 ]=]
-function RagdollSystem:replicateRagdoll(ragdollModel: Model, blueprint: Types.Blueprint?)
+function RagdollSystem:replicateRagdoll(ragdollModel: Model, blueprint: Types.Blueprint?): Ragdoll
 	local ragdoll = RagdollFactory.wrap(ragdollModel, blueprint)
 	self._ragdolls[ragdollModel] = ragdoll
 	return ragdoll
