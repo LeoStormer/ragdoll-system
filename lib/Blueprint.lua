@@ -1,5 +1,5 @@
 --# selene: allow(unused_variable)
-local Types = require(script.Parent.Parent.Types)
+local Types = require(script.Parent.Types)
 --[=[
     @class Blueprint
     @__index Blueprint

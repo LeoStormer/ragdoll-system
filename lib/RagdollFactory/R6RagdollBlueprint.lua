@@ -1,4 +1,4 @@
-local Blueprint = require(script.Parent.Blueprint)
+local Blueprint = require(script.Parent.Parent.Blueprint)
 
 local ARM_SOCKET_SETTINGS = { MaxFrictionTorque = 150, UpperAngle = 50, TwistLowerAngle = -70, TwistUpperAngle = 160 }
 local LEG_SOCKET_SETTINGS = { MaxFrictionTorque = 150, UpperAngle = 40, TwistLowerAngle = -60, TwistUpperAngle = 80 }

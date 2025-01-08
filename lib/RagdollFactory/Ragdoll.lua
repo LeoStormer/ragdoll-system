@@ -12,6 +12,19 @@ local Trove = require(script.Parent.Parent.Parent.Trove)
 ]=]
 --[=[
 	@within Ragdoll
+	@private
+	@interface RagdollInternals
+	._constraintsFolder Folder -- Root Folder
+	._noCollisionConstraintFolder Folder -- Parent Folder to the Ragdoll's NoCollisionConstraints
+	._socketFolder Folder -- Parent folder to the Ragdoll's BallSocketConstraints
+	._noCollisionConstraints { NoCollisionConstraints }.
+	._sockets  { BallSocketConstraint }
+	._limbs { BasePart } -- List of the Ragdoll's direct children BaseParts exluding the root part. 
+	._accessoryHandles { BasePart }
+	._motor6Ds { Motor6D } 
+]=]
+--[=[
+	@within Ragdoll
 	@readonly
 	@prop Character Model
 	The model this ragdoll corresponds to.
@@ -486,7 +499,7 @@ function Ragdoll:deactivateRagdollPhysics()
 end
 
 --[=[
-	Activates ragdoll physics, then deactivates it when the ragdoll has remained still for 1.5 seconds.
+	Activates ragdoll physics, then deactivates it when the ragdoll has remained still.
 ]=]
 function Ragdoll:collapse()
 	if self._collapsed then
@@ -499,7 +512,7 @@ function Ragdoll:collapse()
 end
 
 --[=[
-	Activates ragdoll physics in low detail mode, then deactivates it when the ragdoll has remained still for 1.5 seconds.
+	Activates ragdoll physics in low detail mode, then deactivates it when the ragdoll has remained still.
 ]=]
 function Ragdoll:collapseLowDetail()
 	if self._collapsed then

@@ -1,4 +1,6 @@
 local RunService = game:GetService("RunService")
+
+local Blueprint = require(script.Blueprint)
 local Signal = require(script.Parent.Signal)
 local RagdollFactory = require(script.RagdollFactory)
 local Types = require(script.Types)
@@ -23,6 +25,7 @@ local Types = require(script.Types)
 --[=[
 	@within RagdollSystem
 	@private
+	@external Signal https://sleitnick.github.io/RbxUtil/api/Signal/
 	@interface Signals
 	.ActivateLocalRagdoll Signal
 	.DeactivateLocalRagdoll Signal
@@ -38,7 +41,13 @@ local Types = require(script.Types)
 ]=]
 --[=[
 	@within RagdollSystem
+	@prop Blueprint Blueprint
+	A reference to the base Blueprint class
+]=]
+--[=[
+	@within RagdollSystem
 	@prop RagdollFactory RagdollFactory
+	A reference to the Ragdoll Factory
 ]=]
 --[=[
 	@within RagdollSystem
@@ -60,6 +69,7 @@ RagdollSystem.Signals = {
 	DeactivateLocalRagdoll = Signal.new(),
 	CollapseLocalRagdoll = Signal.new(),
 }
+RagdollSystem.Blueprint = Blueprint
 RagdollSystem.RagdollFactory = RagdollFactory
 RagdollSystem.RagdollConstructed = RagdollFactory.RagdollConstructed
 RagdollSystem._activeRagdolls = 0
@@ -93,7 +103,7 @@ end
 
 --[=[
 	@param ragdollModel Model
-	Activates ragdoll physics on the ragdoll, deactivates ragdoll physics after the ragdoll has remained still for 1.5 seconds.
+	Activates ragdoll physics on the ragdoll, deactivates ragdoll physics after the ragdoll has remained still for 1+ seconds.
 ]=]
 function RagdollSystem:collapseRagdoll(ragdollModel: Model)
 	self.Signals.CollapseRagdoll:Fire(ragdollModel)
@@ -113,6 +123,7 @@ end
 --[=[
 	@param ragdollModel Model
 	@param blueprint Blueprint?
+	@client
 	Creates and caches a Ragdoll from a model that already has its Constraints constructed.
 ]=]
 function RagdollSystem:replicateRagdoll(ragdollModel: Model, blueprint: Types.Blueprint?)
@@ -178,7 +189,7 @@ end
 
 --[=[
 	@client
-	Activates ragdoll physics on the local player's ragdoll, deactivates ragdoll physics after the ragdoll has remained still for 1.5 seconds.
+	Activates ragdoll physics on the local player's ragdoll, deactivates ragdoll physics after the ragdoll has remained still.
 ]=]
 function RagdollSystem:collapseLocalRagdoll()
 	self.Signals.CollapseLocalRagdoll:Fire()
@@ -244,9 +255,9 @@ end
 
 RagdollFactory.RagdollConstructed:Connect(registerEvents)
 
---Motion sensor that deactivates ragdoll physics on collapsed ragdolls that have remained still for 1.5 seconds.
+--Motion sensor that deactivates ragdoll physics on collapsed ragdolls that have remained still.
 task.defer(function()
-	local RAGDOLL_TIMEOUT_INTERVAL = 1.5
+	local RAGDOLL_TIMEOUT_INTERVAL = 1
 	local RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD = 2
 	local startTime
 
