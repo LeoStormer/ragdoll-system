@@ -4,7 +4,9 @@
 ### Added
 
 - Ragdoll.replicate(Model, Blueprint?), creates a ragdoll from a model that already has its constraints constructed.
-- RagdollSystem.RagdollConstructed a signal that fires when a ragdoll is constructed by the RagdollFactory
+- RagdollSystem.RagdollConstructed a signal that fires when a ragdoll is constructed by the RagdollFactory.
+- RagdollSystem.replicateRagdoll(Model, Blueprint?)
+- RagdollSystem.Blueprint a reference to the blueprint base class.
 
 ### Removed
 
@@ -61,6 +63,7 @@
 - Added Low Detail Mode:
   - Ragdoll.activateRagdollPhysicsLowDetail()
   - Ragdoll.collapseLowDetail()
+- RagdollFactory.wrap(Model, Blueprint?)
 
 ## 0.2.0
 ### Changed
