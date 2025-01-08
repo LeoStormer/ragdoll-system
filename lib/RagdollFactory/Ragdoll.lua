@@ -84,21 +84,6 @@ local NOCOLLISIONCONSTRAINT_TEMPLATE: NoCollisionConstraint = Instance.new("NoCo
 NOCOLLISIONCONSTRAINT_TEMPLATE.Enabled = false
 Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE = NOCOLLISIONCONSTRAINT_TEMPLATE
 
-local LINEARVELOCITY_TEMPLATE: LinearVelocity = Instance.new("LinearVelocity")
-LINEARVELOCITY_TEMPLATE.VectorVelocity = Vector3.new(0, 50, -8000) --At least any must be >0 to wake physics
-LINEARVELOCITY_TEMPLATE.MaxForce = 8000
-LINEARVELOCITY_TEMPLATE.RelativeTo = Enum.ActuatorRelativeTo.Attachment0
-LINEARVELOCITY_TEMPLATE.Enabled = false
-Ragdoll.LINEARVELOCITY_TEMPLATE = LINEARVELOCITY_TEMPLATE
-
-local ANGULARVELOCITY_TEMPLATE: AngularVelocity = Instance.new("AngularVelocity")
-ANGULARVELOCITY_TEMPLATE.AngularVelocity = Vector3.new(0, 10, 0)
-ANGULARVELOCITY_TEMPLATE.MaxTorque = 1000
-ANGULARVELOCITY_TEMPLATE.RelativeTo = Enum.ActuatorRelativeTo.Attachment0
-ANGULARVELOCITY_TEMPLATE.ReactionTorqueEnabled = false
-ANGULARVELOCITY_TEMPLATE.Enabled = false
-Ragdoll.ANGULARVELOCITY_TEMPLATE = ANGULARVELOCITY_TEMPLATE
-
 local ACCEPTABLE_RAGDOLL_STATES = {
 	[Enum.HumanoidStateType.Dead] = true,
 	[Enum.HumanoidStateType.Physics] = true,
