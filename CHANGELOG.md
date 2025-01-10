@@ -1,12 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.4.0
 ### Added
 
 - Ragdoll.replicate(Model, Blueprint?), creates a ragdoll from a model that already has its constraints constructed.
 - RagdollSystem.RagdollConstructed a signal that fires when a ragdoll is constructed by the RagdollFactory.
 - RagdollSystem.replicateRagdoll(Model, Blueprint?)
 - RagdollSystem.Blueprint a reference to the blueprint base class.
+- RagdollSystem.setSystemSettings(SystemSettings)
+- RagdollSystem.getSystemSettings()
 
 ### Removed
 
@@ -17,7 +19,7 @@
 ### Changed
 
 - Player ragdolls are now created, stored, and removed the same way npc ragdolls are.
-- Ragdolls are now unfrozen when their humanoid exits the Dead state.
+- Ragdolls are now unfrozen and their physics deactivated when their humanoid exits the Dead state.
 
 ### Fixed
 
