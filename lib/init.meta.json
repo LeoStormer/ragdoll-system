@@ -1,0 +1,8 @@
+{
+    "attributes": {
+        "LowDetailModeThreshold": 15,
+        "CollapseTimeoutInterval": 1,
+        "CollapseTimeoutDistanceThreshold": 2,
+        "FreezeIfDead": true
+    }
+}

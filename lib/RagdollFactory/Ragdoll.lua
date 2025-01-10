@@ -181,6 +181,7 @@ function constructRagdoll(
 	trove:Connect(humanoid.StateChanged, function(old, new)
 		if old == Enum.HumanoidStateType.Dead then
 			ragdoll:unfreeze()
+			ragdoll:deactivateRagdollPhysics()
 		end
 
 		if not ragdoll:isRagdolled() then
@@ -382,7 +383,9 @@ function Ragdoll._activateRagdollPhysics(ragdoll, accessoryHandles, motor6Ds, li
 	ragdoll._ragdolled = true
 	ragdoll.Humanoid.WalkSpeed = 0
 	ragdoll.Humanoid.AutoRotate = false
-	ragdoll.Humanoid:ChangeState(Enum.HumanoidStateType.FallingDown)
+	if ragdoll.Humanoid:GetState() ~= Enum.HumanoidStateType.Dead then
+		ragdoll.Humanoid:ChangeState(Enum.HumanoidStateType.FallingDown)
+	end
 	ragdoll.HumanoidRootPart.CanCollide = false
 	ragdoll.HumanoidRootPart.CustomPhysicalProperties = ROOT_PART_PHYSICAL_PROPERTIES
 

@@ -1,5 +1,12 @@
 local Signal = require(script.Parent.Parent.Signal)
 
+export type SystemSettings = {
+	LowDetailModeThreshold: number?,
+	CollapseTimeoutInterval: number?,
+	CollapseTimeoutDistanceThreshold: number?,
+	FreezeIfDead: boolean?,
+}
+
 export type RagdollInternals = {
 	_constraintsFolder: Folder,
 	_noCollisionConstraintFolder: Folder,

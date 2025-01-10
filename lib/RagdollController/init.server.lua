@@ -54,7 +54,7 @@ RagdollSystem.Signals.ActivateRagdoll:Connect(function(ragdollModel)
 		return
 	end
 
-	if RagdollSystem._activeRagdolls < RagdollSystem._lowDetailThreshold then
+	if RagdollSystem._activeRagdolls < RagdollSystem:getSystemSettings().LowDetailModeThreshold then
 		ragdoll:activateRagdollPhysics()
 	else
 		ragdoll:activateRagdollPhysicsLowDetail()
@@ -86,7 +86,7 @@ RagdollSystem.Signals.CollapseRagdoll:Connect(function(ragdollModel)
 		return
 	end
 
-	if RagdollSystem._activeRagdolls < RagdollSystem._lowDetailThreshold then
+	if RagdollSystem._activeRagdolls < RagdollSystem:getSystemSettings().LowDetailModeThreshold then
 		ragdoll:collapse()
 	else
 		ragdoll:collapseLowDetail()

@@ -73,9 +73,62 @@ RagdollSystem.Blueprint = Blueprint
 RagdollSystem.RagdollFactory = RagdollFactory
 RagdollSystem.RagdollConstructed = RagdollFactory.RagdollConstructed
 RagdollSystem._activeRagdolls = 0
-RagdollSystem._lowDetailThreshold = 15
 RagdollSystem._localPlayerRagdoll = nil
 RagdollSystem._ragdolls = {}
+
+--[=[
+	@within RagdollSystem
+	@interface SystemSettings
+	.LowDetailModeThreshold number? --The number of active ragdolls before the system starts using low detail mode.
+	.CollapseTimoutInterval number? -- The interval in seconds between ragdoll distance checks while collapsed.
+	.CollapseTimeoutDistanceThreshold number? -- The minimum distance in studs a ragdoll must have moved between distance checks to remain collapsed.
+	.FreezeIfDead boolean? -- Whether the system freezes ragdolls if dead when they are being timed out of collapse. If false they remain collapsed.
+]=]
+local defaultSettings = table.freeze({
+	LowDetailModeThreshold = 15,
+	CollapseTimeoutInterval = 1,
+	CollapseTimeoutDistanceThreshold = 2,
+	FreezeIfDead = true,
+})
+
+local systemSettings
+
+--[=[
+	@param settingsDictionary SystemSettings
+]=]
+function RagdollSystem:setSystemSettings(settingsDictionary: SystemSettings)
+	local newSettings = {}
+	newSettings.LowDetailModeThreshold = if settingsDictionary.LowDetailModeThreshold
+			and typeof(settingsDictionary.LowDetailModeThreshold) == "number"
+		then settingsDictionary.LowDetailModeThreshold
+		else defaultSettings.LowDetailModeThreshold
+
+	newSettings.CollapseTimeoutInterval = if settingsDictionary.CollapseTimeoutInterval
+			and typeof(settingsDictionary.CollapseTimeoutInterval) == "number"
+		then settingsDictionary.CollapseTimeoutInterval
+		else defaultSettings.CollapseTimeoutInterval
+
+	newSettings.CollapseTimeoutDistanceThreshold = if settingsDictionary.CollapseTimeoutDistanceThreshold
+			and typeof(settingsDictionary.CollapseTimeoutDistanceThreshold) == "number"
+		then settingsDictionary.CollapseTimeoutDistanceThreshold
+		else defaultSettings.CollapseTimeoutDistanceThreshold
+
+	newSettings.FreezeIfDead = if settingsDictionary.FreezeIfDead ~= nil
+			and typeof(settingsDictionary.FreezeIfDead) == "boolean"
+		then settingsDictionary.FreezeIfDead
+		else defaultSettings.FreezeIfDead
+
+	systemSettings = table.freeze(newSettings)
+end
+
+RagdollSystem:setSystemSettings(script:GetAttributes())
+
+--[=[
+	@return SystemSettings
+]=]
+function RagdollSystem:getSystemSettings()
+	return systemSettings
+end
 
 --[=[
 	@param ragdollModel Model
@@ -213,14 +266,11 @@ end
 
 function registerEvents(ragdoll)
 	ragdoll.Collapsed:Connect(function()
-		table.insert(
-			collapsed,
-			{
-				Ragdoll = ragdoll,
-				RootPosition = ragdoll.HumanoidRootPart.Position,
-				StartTime = workspace:GetServerTimeNow(),
-			}
-		)
+		table.insert(collapsed, {
+			Ragdoll = ragdoll,
+			RootPosition = ragdoll.HumanoidRootPart.Position,
+			StartTime = workspace:GetServerTimeNow(),
+		})
 		ragdollMap[ragdoll] = #collapsed
 	end)
 
@@ -257,8 +307,6 @@ RagdollFactory.RagdollConstructed:Connect(registerEvents)
 
 --Motion sensor that deactivates ragdoll physics on collapsed ragdolls that have remained still.
 task.defer(function()
-	local RAGDOLL_TIMEOUT_INTERVAL = 1
-	local RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD = 2
 	local startTime
 
 	if RunService:IsServer() then
@@ -277,7 +325,7 @@ task.defer(function()
 		local now = workspace:GetServerTimeNow()
 		local elapsedSeconds = (now - startTime)
 		local oldCounter = counter
-		counter = elapsedSeconds % RAGDOLL_TIMEOUT_INTERVAL
+		counter = elapsedSeconds % systemSettings.CollapseTimeoutInterval
 		if counter > oldCounter then
 			return
 		end
@@ -287,28 +335,32 @@ task.defer(function()
 			local ragdoll = collapsedInfo.Ragdoll
 			local lastPos = collapsedInfo.RootPosition
 			local collapsedStart = collapsedInfo.StartTime
-			if (now - collapsedStart) < RAGDOLL_TIMEOUT_INTERVAL then
+			if (now - collapsedStart) < systemSettings.CollapseTimeoutInterval then
 				continue
 			end
 
 			local newPos = ragdoll.HumanoidRootPart.Position
 			local distance = (newPos - lastPos).Magnitude
 			collapsedInfo.RootPosition = newPos
-			if distance >= RAGDOLL_TIMEOUT_DISTANCE_THRESHOLD then
+			if distance >= systemSettings.CollapseTimeoutDistanceThreshold then
 				continue
 			end
 
 			ragdoll._collapsed = false
 			removeFromLoop(ragdoll)
-			if ragdoll.Humanoid:GetState() == Enum.HumanoidStateType.Dead then
-				ragdoll:freeze()
-			else
+			if ragdoll.Humanoid:GetState() ~= Enum.HumanoidStateType.Dead then
 				ragdoll:deactivateRagdollPhysics()
+				continue
+			end
+
+			if systemSettings.FreezeIfDead then
+				ragdoll:freeze()
 			end
 		end
 	end)
 end)
 
+export type SystemSettings = Types.SystemSettings
 export type Ragdoll = Types.Ragdoll
 
 return RagdollSystem

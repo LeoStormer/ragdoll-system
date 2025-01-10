@@ -8,7 +8,7 @@ local Types = require(script.Parent.Types)
 
 --Automated Ragdoll Activation and Deactivation
 function activateRagdollPhysics(ragdoll: Types.Ragdoll)
-	if RagdollSystem._activeRagdolls < RagdollSystem._lowDetailThreshold then
+	if RagdollSystem._activeRagdolls < RagdollSystem:getSystemSettings().LowDetailModeThreshold then
 		ragdoll:activateRagdollPhysics()
 	else
 		ragdoll:activateRagdollPhysicsLowDetail()
@@ -20,7 +20,7 @@ function deactivateRagdollPhysics(ragdoll: Types.Ragdoll)
 end
 
 function collapseRagdoll(ragdoll: Types.Ragdoll)
-	if RagdollSystem._activeRagdolls < RagdollSystem._lowDetailThreshold then
+	if RagdollSystem._activeRagdolls < RagdollSystem:getSystemSettings().LowDetailModeThreshold then
 		ragdoll:collapse()
 	else
 		ragdoll:collapseLowDetail()
@@ -85,7 +85,7 @@ CollectionService:GetInstanceRemovedSignal("Ragdoll"):Connect(function(ragdollMo
 end)
 
 function onPlayerAdded(player: Player)
-	player.CharacterAppearanceLoaded:Connect(function(character)
+	player.CharacterAdded:Connect(function(character)
 		--for reasons I dont want to think about, the character model literally loses
 		--its head without this defer if you use this system with imediate mode signal behavior
 		task.defer(character.AddTag, character, "Ragdoll")
