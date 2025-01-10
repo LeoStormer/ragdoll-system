@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.4.0
+### Added
+
+- Ragdoll.replicate(Model, Blueprint?), creates a ragdoll from a model that already has its constraints constructed.
+- RagdollSystem.RagdollConstructed a signal that fires when a ragdoll is constructed by the RagdollFactory.
+- RagdollSystem.replicateRagdoll(Model, Blueprint?)
+- RagdollSystem.Blueprint a reference to the blueprint base class.
+- RagdollSystem.setSystemSettings(SystemSettings)
+- RagdollSystem.getSystemSettings()
+
+### Removed
+
+- ReplicatedRagdoll class
+- RagdollSystem:addPlayerRagdoll(Player, Model)
+- RagdollSystem:removePlayerRagdoll(Player)
+
+### Changed
+
+- Player ragdolls are now created, stored, and removed the same way npc ragdolls are.
+- Ragdolls are now unfrozen and their physics deactivated when their humanoid exits the Dead state.
+
+### Fixed
+
+- Fixed a bug where if player spammed DeactivateRagdoll Remote after dying, the server could revive their character.
+- Fixed a bug that caused a delay in freeing a collapsed ragdoll from the motion sensor loop.
+
 ## 0.3.5
 ### Fixed
 
@@ -39,6 +65,7 @@
 - Added Low Detail Mode:
   - Ragdoll.activateRagdollPhysicsLowDetail()
   - Ragdoll.collapseLowDetail()
+- RagdollFactory.wrap(Model, Blueprint?)
 
 ## 0.2.0
 ### Changed

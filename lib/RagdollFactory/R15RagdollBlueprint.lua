@@ -1,4 +1,4 @@
-local Blueprint = require(script.Parent.Blueprint)
+local Blueprint = require(script.Parent.Parent.Blueprint)
 local Ragdoll = require(script.Parent.Ragdoll)
 
 local UPPER_ARM_SOCKET_SETTINGS =

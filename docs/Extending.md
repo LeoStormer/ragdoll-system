@@ -4,17 +4,30 @@ So you want to create a different type of ragdoll than R15 or R6? No problem cre
 
 
 ```lua title="MyBlueprint.lua"
-    local MyBlueprint = {}
-    MyBlueprint.numLimbs = 15
-    MyBlueprint.socketSettings = {} --The keys are names of Parts in your model e.g. RightHand, UpperTorso, or Head.
+    local Blueprint = require(path.to.RagdollSystem).Blueprint
+
+    local MyBlueprint = setmetatable({}, Blueprint)
+    MyBlueprint.socketSettings = { --The keys are names of Parts in your model e.g. RightHand, UpperTorso, or Head.
+		Head = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
+		Torso = { MaxFrictionTorque = 50, UpperAngle = 20, TwistLowerAngle = 0, TwistUpperAngle = 30 },
+		MyLimb = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
+		MyLimb2 = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
+    }
     MyBlueprint.cframeOverrides = {} --The keys are names of Parts in your model.
 
     function MyBlueprint.satisfiesRequirements(model: Model): boolean
         --How can we tell that model satisfies my blueprint?
+        return model:FindFirstChild("MyLimb") ~= nil
     end
 
-    function MyBlueprint.finalTouches(ragdoll: Ragdoll)
+    function MyBlueprint.finalTouches(ragdoll: Ragdoll & RagdollInternals)
         --Do something with ragdoll, or don't, ragdoll won't mind.
+        local noCollision = Instance.new("NoCollisionConstraint")
+        noCollision.Enabled = false
+        noCollision.Part0 = ragdoll.Character.MyLimb
+        noCollision.Part1 = ragdoll.Character.MyLimb2
+        noCollision.Parent = ragdoll._noCollisionConstraintFolder
+        table.insert(ragdoll._noCollisionConstraints, noCollision)
     end
 
     return MyBlueprint

@@ -1,33 +1,29 @@
-local Blueprint = require(script.Blueprint)
+local Blueprint = require(script.Parent.Blueprint)
 local Signal = require(script.Parent.Parent.Signal)
 local Ragdoll = require(script.Ragdoll)
 local R15RagdollBlueprint = require(script.R15RagdollBlueprint)
 local R6RagdollBlueprint = require(script.R6RagdollBlueprint)
-local ReplicatedRagdoll = require(script.ReplicatedRagdoll)
 
 --[=[
 	@class RagdollFactory
 	@__index RagdollFactory
 ]=]
-
--- --[=[
--- 	@within RagdollFactory
--- 	@private
--- 	@readonly
--- 	@prop _blueprintAdded Signal
--- 	Fires when a blueprint is added to the factory.
--- ]=]
+local RagdollFactory = {}
+RagdollFactory._blueprints = {}
+RagdollFactory._blueprintAdded = Signal.new()
 
 --[=[
 	@within RagdollFactory
 	@readonly
 	@prop RagdollConstructed Signal
 	Fires when a ragdoll is constructed by the factory.
-]=]
 
-local RagdollFactory = {}
-RagdollFactory._blueprints = {}
-RagdollFactory._blueprintAdded = Signal.new()
+	```lua
+	RagdollFactory.RagdollConstructed:Connect(function(ragdoll: Ragdoll)
+		-- Do ragdoll things...
+	end)
+	```
+]=]
 RagdollFactory.RagdollConstructed = Signal.new()
 
 function getMatchingBlueprint(model: Model, blueprintOverride: Blueprint?): Blueprint?
@@ -60,13 +56,12 @@ end
 
 --[=[
 	@client
-	@private
 	Creates a Ragdoll from a model that already has its Constraints constructed. Used to replicate a ragdoll across server -> client boundary.
 ]=]
 function RagdollFactory.wrap(ragdollModel: Model, blueprintOverride: Blueprint?): Ragdoll?
 	local blueprint = getMatchingBlueprint(ragdollModel, blueprintOverride)
 	if blueprint then
-		local ragdoll = ReplicatedRagdoll.new(ragdollModel, blueprint)
+		local ragdoll = Ragdoll.replicate(ragdollModel, blueprint)
 		RagdollFactory.RagdollConstructed:Fire(ragdoll)
 		return ragdoll
 	end

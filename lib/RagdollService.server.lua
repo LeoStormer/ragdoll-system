@@ -3,56 +3,50 @@ local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 
 local RagdollSystem = require(script.Parent)
-local RagdollFactory = require(script.Parent.RagdollFactory)
+local RagdollFactory = RagdollSystem.RagdollFactory
+local Types = require(script.Parent.Types)
 
 --Automated Ragdoll Activation and Deactivation
-function activateRagdollPhysics(ragdoll: RagdollFactory.Ragdoll)
-	if RagdollSystem._activeRagdolls < RagdollSystem._lowDetailThreshold then
+function activateRagdollPhysics(ragdoll: Types.Ragdoll)
+	if RagdollSystem._activeRagdolls < RagdollSystem:getSystemSettings().LowDetailModeThreshold then
 		ragdoll:activateRagdollPhysics()
 	else
 		ragdoll:activateRagdollPhysicsLowDetail()
 	end
 end
 
-function deactivateRagdollPhysics(ragdoll: RagdollFactory.Ragdoll)
+function deactivateRagdollPhysics(ragdoll: Types.Ragdoll)
 	ragdoll:deactivateRagdollPhysics()
 end
 
-function collapseRagdoll(ragdoll: RagdollFactory.Ragdoll)
-	if RagdollSystem._activeRagdolls < RagdollSystem._lowDetailThreshold then
+function collapseRagdoll(ragdoll: Types.Ragdoll)
+	if RagdollSystem._activeRagdolls < RagdollSystem:getSystemSettings().LowDetailModeThreshold then
 		ragdoll:collapse()
 	else
 		ragdoll:collapseLowDetail()
 	end
 end
 
-function activatePlayerRagdollPhysics(player: Player)
+RagdollSystem.Remotes.ActivateRagdoll.OnServerEvent:Connect(function(player: Player)
 	local ragdoll = RagdollSystem:getPlayerRagdoll(player)
 	if ragdoll then
 		activateRagdollPhysics(ragdoll)
 	end
-end
+end)
 
-function deactivatePlayerRagdollPhysics(player: Player)
+RagdollSystem.Remotes.DeactivateRagdoll.OnServerEvent:Connect(function(player: Player)
 	local ragdoll = RagdollSystem:getPlayerRagdoll(player)
-	if ragdoll then
+	if ragdoll and ragdoll.Humanoid:GetState() ~= Enum.HumanoidStateType.Dead then
 		deactivateRagdollPhysics(ragdoll)
 	end
-end
+end)
 
-function collapsePlayerRagdoll(player: Player)
+RagdollSystem.Remotes.CollapseRagdoll.OnServerEvent:Connect(function(player: Player)
 	local ragdoll = RagdollSystem:getPlayerRagdoll(player)
 	if ragdoll then
 		collapseRagdoll(ragdoll)
 	end
-end
-
-RagdollSystem.Remotes.ActivateRagdoll.OnServerEvent:Connect(activatePlayerRagdollPhysics)
-RagdollSystem.Signals.ActivatePlayerRagdoll:Connect(activatePlayerRagdollPhysics)
-RagdollSystem.Remotes.DeactivateRagdoll.OnServerEvent:Connect(deactivatePlayerRagdollPhysics)
-RagdollSystem.Signals.DeactivatePlayerRagdoll:Connect(deactivatePlayerRagdollPhysics)
-RagdollSystem.Remotes.CollapseRagdoll.OnServerEvent:Connect(collapsePlayerRagdoll)
-RagdollSystem.Signals.CollapsePlayerRagdoll:Connect(collapsePlayerRagdoll)
+end)
 
 RagdollSystem.Signals.ActivateRagdoll:Connect(function(ragdollModel)
 	local ragdoll = RagdollSystem:getRagdoll(ragdollModel)
@@ -80,38 +74,22 @@ function onRagdollAdded(ragdollModel)
 	RagdollSystem:addRagdoll(ragdollModel)
 end
 
-function onRagdollRemoved(ragdollModel)
-	RagdollSystem:removeRagdoll(ragdollModel)
-end
-
 for _, ragdollModel in CollectionService:GetTagged("Ragdoll") do
 	onRagdollAdded(ragdollModel)
 end
 
 CollectionService:GetInstanceAddedSignal("Ragdoll"):Connect(onRagdollAdded)
-CollectionService:GetInstanceRemovedSignal("Ragdoll"):Connect(onRagdollRemoved)
+
+CollectionService:GetInstanceRemovedSignal("Ragdoll"):Connect(function(ragdollModel)
+	RagdollSystem:removeRagdoll(ragdollModel)
+end)
 
 function onPlayerAdded(player: Player)
 	player.CharacterAdded:Connect(function(character)
-		local ragdoll = RagdollSystem:getPlayerRagdoll(player)
-		if ragdoll then
-			ragdoll:Destroy()
-		end
-
 		--for reasons I dont want to think about, the character model literally loses
-		--its head without this defer* if you use this system with imediate mode signal behavior
-		task.defer(function()
-			RagdollSystem:addPlayerRagdoll(player, character)
-		end)
+		--its head without this defer if you use this system with imediate mode signal behavior
+		task.defer(character.AddTag, character, "Ragdoll")
 	end)
-
-	player.CharacterRemoving:Connect(function(_character)
-		RagdollSystem:removePlayerRagdoll(player)
-	end)
-end
-
-function onPlayerRemoving(player: Player)
-	RagdollSystem:removePlayerRagdoll(player)
 end
 
 for _, player in Players:GetPlayers() do
@@ -119,23 +97,14 @@ for _, player in Players:GetPlayers() do
 end
 
 Players.PlayerAdded:Connect(onPlayerAdded)
-Players.PlayerRemoving:Connect(onPlayerRemoving)
 
-RagdollFactory._blueprintAdded:Connect(function(blueprint: RagdollFactory.Blueprint)
-	for model, ragdoll: RagdollSystem.Ragdoll in RagdollSystem._ragdolls do
+RagdollFactory._blueprintAdded:Connect(function(blueprint: Types.Blueprint)
+	for model, ragdoll: Types.Ragdoll in RagdollSystem._ragdolls do
 		if not blueprint.satisfiesRequirements(model) then
 			continue
 		end
 
 		ragdoll:destroy()
-		local newRagdoll = RagdollFactory.new(model, blueprint)
-		RagdollSystem._ragdolls[model] = newRagdoll
-
-		local player = Players:GetPlayerFromCharacter(model)
-		if not player then
-			return
-		end
-
-		RagdollSystem._playerRagdolls[player.UserId] = newRagdoll
+		RagdollSystem:addRagdoll(model, blueprint)
 	end
 end)
