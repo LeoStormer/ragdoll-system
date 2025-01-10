@@ -54,6 +54,12 @@ local Types = require(script.Types)
 	@readonly
 	@prop RagdollConstructed Signal
 	Fires when a ragdoll is constructed by the factory.
+
+	```lua
+	RagdollSystem.RagdollConstructed:Connect(function(ragdoll: Ragdoll)
+		doSomething(ragdoll)
+	end)
+	```
 ]=]
 local RagdollSystem = {}
 RagdollSystem.Remotes = {

@@ -66,7 +66,7 @@ function Blueprint.satisfiesRequirements(model: Model)
 end
 
 --[=[
-    @param ragdoll Ragdoll
+    @param ragdoll Ragdoll & RagdollInternals
     Apply final touches to the ragdoll. For example, in the R15 blueprint some extra NoCollisionConstraints are added to make the ragdoll physics flow smoother.
 ]=]
 function Blueprint.finalTouches(ragdoll: Types.Ragdoll & Types.RagdollInternals) end

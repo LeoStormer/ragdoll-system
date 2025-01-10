@@ -17,6 +17,12 @@ RagdollFactory._blueprintAdded = Signal.new()
 	@readonly
 	@prop RagdollConstructed Signal
 	Fires when a ragdoll is constructed by the factory.
+
+	```lua
+	RagdollFactory.RagdollConstructed:Connect(function(ragdoll: Ragdoll)
+		-- Do ragdoll things...
+	end)
+	```
 ]=]
 RagdollFactory.RagdollConstructed = Signal.new()
 
