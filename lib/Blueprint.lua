@@ -50,7 +50,7 @@ local Types = require(script.Parent.Types)
 ]=]
 local Blueprint = {}
 Blueprint.__index = Blueprint
-Blueprint.numLimbs = 15
+Blueprint.numJoints = 15
 Blueprint.socketSettings = {}
 Blueprint.cframeOverrides = {}
 

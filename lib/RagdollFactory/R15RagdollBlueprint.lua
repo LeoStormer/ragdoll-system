@@ -29,7 +29,7 @@ function setupCollisionConstraints(ragdoll)
 end
 
 local R15RagdollBlueprint = setmetatable({
-	numLimbs = 15, -- number of constraints created on an R15 Rig, this number was tested for.
+	numJoints = 15, -- number of constraints created on an R15 Rig, this number was tested for.
 	socketSettings = {
 		Neck = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
 		Waist = { MaxFrictionTorque = 50, UpperAngle = 20, TwistLowerAngle = -10, TwistUpperAngle = 30 },
