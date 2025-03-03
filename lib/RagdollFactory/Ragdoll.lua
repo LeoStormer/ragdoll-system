@@ -5,7 +5,18 @@ local Types = require(script.Parent.Parent.Types)
 local TableUtils = require(script.Parent.Parent.TableUtils)
 local Signal = require(script.Parent.Parent.Parent.Signal)
 local Trove = require(script.Parent.Parent.Parent.Trove)
-
+--[[
+	TODO: Add support for avatar joint upgrade
+	if Animation constraints are present:
+		record the original settings of the (Animation, BallSocket, NoCollision) Constraints and their attachments.
+		find the BallSocketConstraints and NoCollisionConstraints instead of creating them
+		On Activation:
+			Move their attachments to the CFrameOverrides if present
+			Disable The AnimationConstraint
+		On Deactivation:
+			Move attachments back to original CFrames
+			set Animation, BallSocket, and NoCollision Constraints back to original settings.
+]]
 --[=[
 	@class Ragdoll
 	@__index Ragdoll
