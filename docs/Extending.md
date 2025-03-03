@@ -7,13 +7,13 @@ So you want to create a different type of ragdoll than R15 or R6? No problem cre
     local Blueprint = require(path.to.RagdollSystem).Blueprint
 
     local MyBlueprint = setmetatable({}, Blueprint)
-    MyBlueprint.socketSettings = { --The keys are names of Parts in your model e.g. RightHand, UpperTorso, or Head.
-		Head = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
-		Torso = { MaxFrictionTorque = 50, UpperAngle = 20, TwistLowerAngle = 0, TwistUpperAngle = 30 },
-		MyLimb = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
-		MyLimb2 = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
+    MyBlueprint.socketSettings = { --The keys are names of Motor6Ds in your model e.g. Wrist, Waist, or Neck.
+		Neck = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
+		Root = { MaxFrictionTorque = 50, UpperAngle = 20, TwistLowerAngle = 0, TwistUpperAngle = 30 },
+		MyJoint = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
+		MyJoint2 = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
     }
-    MyBlueprint.cframeOverrides = {} --The keys are names of Parts in your model.
+    MyBlueprint.cframeOverrides = {} --The keys are names of Motor6Ds in your model.
 
     function MyBlueprint.satisfiesRequirements(model: Model): boolean
         --How can we tell that model satisfies my blueprint?

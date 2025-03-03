@@ -24,8 +24,8 @@ local Types = require(script.Parent.Types)
 ]=]
 --[=[
 	@within Blueprint
-	@prop numlimbs number?
-	Number of limbs your character model has
+	@prop numJoints number?
+	Number of joints your character model has
 	:::tip
 
 	Putting an accurate number can improve the performance of ragdoll construction slightly, although it isn't necessary.
@@ -40,8 +40,8 @@ local Types = require(script.Parent.Types)
 --[=[
     @within Blueprint
     @prop cframeOverrides CFrameOverrides?
-    Used to change how specific parts in the ragdoll are attached on the ragdoll.
-    For example, in the R6 blueprint the arms are overridden to be attached the same way Upper Arms are attached in R15 Characters.
+    Used to change how joints connect their parts on the ragdoll.
+    For example, in the R6 blueprint the shoulders are overridden to attach the Arms to the Torso the same way the Upper Arms are attached to the Upper Torso in R15 Characters.
 ]=]
 --[=[
 	@within Blueprint

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+### Changed
+
+- Blueprints now describe ragdolls by their Motor6Ds rather than the limbs affected by them.
+- Blueprint._lowDetailModeLimbs -> Blueprint._lowDetailModeJoints.
+- Blueprint.numLimbs -> Blueprint.numJoints.
+
 ## 0.4.0
 ### Added
 
