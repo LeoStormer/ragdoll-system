@@ -1,25 +1,28 @@
+--# selene: allow(unused_variable)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local RagdollSystem = require(ReplicatedStorage.Packages.RagdollSystem)
+local Types = require(ReplicatedStorage.Packages.RagdollSystem.Types)
 
-function collapse()
+function collapse(ragdoll: Types.Ragdoll)
+	-- ragdoll:collapseLowDetail()
 	RagdollSystem:collapseLocalRagdoll()
 end
 
-function activate()
+function activate(ragdoll: Types.Ragdoll)
+	-- ragdoll:activateRagdollPhysicsLowDetail()
 	RagdollSystem:activateLocalRagdoll()
 end
 
-function deactivate()
+function deactivate(_ragdoll: Types.Ragdoll)
 	RagdollSystem:deactivateLocalRagdoll()
 end
 
-function toggle()
-	local ragdoll = RagdollSystem:getLocalRagdoll()
-	if ragdoll and ragdoll:isRagdolled() then
-		deactivate()
+function toggle(ragdoll: Types.Ragdoll)
+	if ragdoll:isRagdolled() then
+		deactivate(ragdoll)
 	else
-		activate()
+		activate(ragdoll)
 	end
 end
 
@@ -34,6 +37,10 @@ UserInputService.InputBegan:Connect(function(inputObject, gameProcessedEvent)
 	if gameProcessedEvent or not actions[inputObject.KeyCode] then
 		return
 	end
+	local ragdoll = RagdollSystem:getLocalRagdoll()
+	if not ragdoll then
+		return
+	end
 
-	actions[inputObject.KeyCode]()
+	actions[inputObject.KeyCode](ragdoll)
 end)
