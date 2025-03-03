@@ -40,18 +40,18 @@ export type Ragdoll = {
 	Destroy: (self: Ragdoll) -> (),
 }
 
+export type SocketSetting = {
+	MaxFrictionTorque: number,
+	UpperAngle: number,
+	TwistLowerAngle: number,
+	TwistUpperAngle: number,
+}
+
 export type Blueprint = {
-	numLimbs: number?,
-	socketSettings: {
-		[string]: {
-			MaxFrictionTorque: number,
-			UpperAngle: number,
-			TwistLowerAngle: number,
-			TwistUpperAngle: number,
-		},
-	},
-	cframeOverrides: { [string]: { C0: CFrame, C1: CFrame } }?,
-	lowDetailModeLimbs: { [string]: boolean }?,
+	numLimbs: number,
+	socketSettings: { [string]: SocketSetting },
+	cframeOverrides: { [string]: { C0: CFrame, C1: CFrame } },
+	lowDetailModeJoints: { [string]: boolean }?,
 	satisfiesRequirements: (Model) -> boolean,
 	finalTouches: (RagdollInternals & Ragdoll) -> (),
 }

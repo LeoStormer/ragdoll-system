@@ -15,12 +15,12 @@ local Types = require(script.Parent.Types)
 --[=[
 	@within Blueprint
 	@type SocketSettingsDictionary {[string] = SocketSetting}
-	Each string must refer to a Basepart within the character this blueprint describes.
+	Each string must refer to a Motor6D within the character this blueprint describes.
 ]=]
 --[=[
 	@within Blueprint
 	@type CFrameOverrides {[string] = {C0: CFrame, C1: CFrame}
-	Each string must refer to a Basepart within the character this blueprint describes.
+	Each string must refer to a Motor6D within the character this blueprint describes.
 ]=]
 --[=[
 	@within Blueprint
@@ -35,7 +35,7 @@ local Types = require(script.Parent.Types)
 --[=[
     @within Blueprint
     @prop socketSettings SocketSettingsDictionary
-    Used to describe the range of motion of each BasePart within the ragdoll.
+    Used to describe the range of motion of each joint within the ragdoll.
 ]=]
 --[=[
     @within Blueprint
@@ -45,8 +45,8 @@ local Types = require(script.Parent.Types)
 ]=]
 --[=[
 	@within Blueprint
-	@prop lowDetailModeLimbs { [string]: boolean }?
-	Describes which limbs will be activated in low detail mode.
+	@prop lowDetailModeJoints { [string]: boolean }?
+	Describes which Joints will be activated in low detail mode.
 ]=]
 local Blueprint = {}
 Blueprint.__index = Blueprint

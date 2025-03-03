@@ -1,16 +1,13 @@
 local Blueprint = require(script.Parent.Parent.Blueprint)
 local Ragdoll = require(script.Parent.Ragdoll)
 
-local UPPER_ARM_SOCKET_SETTINGS =
+local SHOULDER_SOCKET_SETTINGS =
 	{ MaxFrictionTorque = 150, UpperAngle = 50, TwistLowerAngle = -70, TwistUpperAngle = 160 }
-local LOWER_ARM_SOCKET_SETTINGS =
-	{ MaxFrictionTorque = 150, UpperAngle = 0, TwistLowerAngle = -5, TwistUpperAngle = 95 }
-local UPPER_LEG_SOCKET_SETTINGS =
-	{ MaxFrictionTorque = 150, UpperAngle = 40, TwistLowerAngle = -45, TwistUpperAngle = 45 }
-local LOWER_LEG_SOCKET_SETTINGS =
-	{ MaxFrictionTorque = 150, UpperAngle = 0, TwistLowerAngle = -80, TwistUpperAngle = 5 }
-local HANDS_FEET_SOCKET_SETTINGS =
-	{ MaxFrictionTorque = 50, UpperAngle = 10, TwistLowerAngle = -45, TwistUpperAngle = 5 }
+local ELBOW_SOCKET_SETTINGS = { MaxFrictionTorque = 150, UpperAngle = 0, TwistLowerAngle = -5, TwistUpperAngle = 95 }
+local HIP_SOCKET_SETTINGS = { MaxFrictionTorque = 150, UpperAngle = 40, TwistLowerAngle = -45, TwistUpperAngle = 45 }
+local KNEE_SOCKET_SETTINGS = { MaxFrictionTorque = 150, UpperAngle = 0, TwistLowerAngle = -80, TwistUpperAngle = 5 }
+local WRIST_SOCKET_SETTINGS = { MaxFrictionTorque = 50, UpperAngle = 10, TwistLowerAngle = -45, TwistUpperAngle = 5 }
+local ANKLE_SOCKET_SETTINGS = { MaxFrictionTorque = 50, UpperAngle = 10, TwistLowerAngle = -45, TwistUpperAngle = 5 }
 
 function insertNoCollisionConstraint(ragdoll, limb0, limb1)
 	local noCollisionConstraint = Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone()
@@ -34,33 +31,35 @@ end
 local R15RagdollBlueprint = setmetatable({
 	numLimbs = 15, -- number of constraints created on an R15 Rig, this number was tested for.
 	socketSettings = {
-		Head = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
-		UpperTorso = { MaxFrictionTorque = 50, UpperAngle = 20, TwistLowerAngle = -10, TwistUpperAngle = 30 },
-		LowerTorso = { MaxFrictionTorque = 50, UpperAngle = 20, TwistLowerAngle = 0, TwistUpperAngle = 30 },
+		Neck = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
+		Waist = { MaxFrictionTorque = 50, UpperAngle = 20, TwistLowerAngle = -10, TwistUpperAngle = 30 },
+		Root = { MaxFrictionTorque = 50, UpperAngle = 20, TwistLowerAngle = 0, TwistUpperAngle = 30 },
 
-		RightUpperArm = UPPER_ARM_SOCKET_SETTINGS,
-		LeftUpperArm = UPPER_ARM_SOCKET_SETTINGS,
+		RightShoulder = SHOULDER_SOCKET_SETTINGS,
+		LeftShoulder = SHOULDER_SOCKET_SETTINGS,
 
-		RightLowerArm = LOWER_ARM_SOCKET_SETTINGS,
-		LeftLowerArm = LOWER_ARM_SOCKET_SETTINGS,
+		RightElbow = ELBOW_SOCKET_SETTINGS,
+		LeftElbow = ELBOW_SOCKET_SETTINGS,
 
-		RightUpperLeg = UPPER_LEG_SOCKET_SETTINGS,
-		LeftUpperLeg = UPPER_LEG_SOCKET_SETTINGS,
+		RightHip = HIP_SOCKET_SETTINGS,
+		LeftHip = HIP_SOCKET_SETTINGS,
 
-		RightLowerLeg = LOWER_LEG_SOCKET_SETTINGS,
-		LeftLowerLeg = LOWER_LEG_SOCKET_SETTINGS,
+		RightKnee = KNEE_SOCKET_SETTINGS,
+		LeftKnee = KNEE_SOCKET_SETTINGS,
 
-		RightHand = HANDS_FEET_SOCKET_SETTINGS,
-		LeftHand = HANDS_FEET_SOCKET_SETTINGS,
-		RightFoot = HANDS_FEET_SOCKET_SETTINGS,
-		LeftFoot = HANDS_FEET_SOCKET_SETTINGS,
+		RightWrist = WRIST_SOCKET_SETTINGS,
+		LeftWrist = WRIST_SOCKET_SETTINGS,
+
+		RightAnkle = ANKLE_SOCKET_SETTINGS,
+		LeftAnkle = ANKLE_SOCKET_SETTINGS,
 	},
-	lowDetailModeLimbs = {
-		Head = true,
-		RightUpperArm = true,
-		LeftUpperArm = true,
-		RightUpperLeg = true,
-		LeftUpperLeg = true,
+	lowDetailModeJoints = {
+		Neck = true,
+		Root = true,
+		RightShoulder = true,
+		LeftShoulder = true,
+		RightHip = true,
+		LeftHip = true,
 	},
 }, Blueprint)
 

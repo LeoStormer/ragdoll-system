@@ -166,14 +166,14 @@ function constructRagdoll(
 		_limbs = limbs,
 		_accessoryHandles = accessoryHandles,
 		_motor6Ds = motor6Ds,
-		_lowDetailModeSockets = if blueprint.lowDetailModeLimbs
+		_lowDetailModeSockets = if blueprint.lowDetailModeJoints
 			then TableUtils.filter(sockets, function(socket: BallSocketConstraint)
-				return blueprint.lowDetailModeLimbs[socket.Name]
+				return blueprint.lowDetailModeJoints[socket.Name]
 			end)
 			else sockets,
-		_lowDetailMotor6Ds = if blueprint.lowDetailModeLimbs
+		_lowDetailMotor6Ds = if blueprint.lowDetailModeJoints
 			then TableUtils.filter(motor6Ds, function(motor: Motor6D)
-				return blueprint.lowDetailModeLimbs[(motor.Part1 :: BasePart).Name]
+				return blueprint.lowDetailModeJoints[motor.Name]
 			end)
 			else motor6Ds,
 	}, Ragdoll)
@@ -237,12 +237,13 @@ end
 
 do
 	local function createConstraints(
-		sourceLimb: BasePart,
-		affectedLimb: BasePart,
+		joint: Motor6D,
 		cframe0: CFrame,
 		cframe1: CFrame,
-		blueprint: Types.Blueprint
+		socketSetting: Types.SocketSetting
 	)
+		local sourceLimb = joint.Part0
+		local affectedLimb = joint.Part1
 		local noCollisionConstraint = Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone()
 		noCollisionConstraint.Part0 = sourceLimb
 		noCollisionConstraint.Part1 = affectedLimb
@@ -261,9 +262,8 @@ do
 		socket.LimitsEnabled = true
 		socket.TwistLimitsEnabled = true
 
-		local socketSettings = blueprint.socketSettings[affectedLimb.Name]
-		if socketSettings ~= nil then
-			for key, value in socketSettings do
+		if socketSetting ~= nil then
+			for key, value in socketSetting do
 				if socket[key] then
 					socket[key] = value
 				end
@@ -278,25 +278,23 @@ do
 		motor6Ds: { Motor6D },
 		socketsFolder: Folder,
 		noCollisionsFolder: Folder,
-		blueprint
+		blueprint: Types.Blueprint
 	)
 		local sockets = table.create(blueprint.numLimbs)
 		local noCollisionConstraints = table.create(blueprint.numLimbs)
 
-		for _, motor6D: Motor6D in motor6Ds do
-			local sourceLimb = motor6D.Part0
-			local affectedLimb = motor6D.Part1
-			local override = blueprint.cframeOverrides[affectedLimb.Name]
-			local cframe0 = if override then override.C0 else motor6D.C0
-			local cframe1 = if override then override.C1 else motor6D.C1
+		for _, joint: Motor6D in motor6Ds do
+			local override = blueprint.cframeOverrides[joint.Name]
+			local cframe0 = if override then override.C0 else joint.C0
+			local cframe1 = if override then override.C1 else joint.C1
 			local socket, noCollisionConstraint, attachment0, attachment1 =
-				createConstraints(sourceLimb, affectedLimb, cframe0, cframe1, blueprint)
+				createConstraints(joint, cframe0, cframe1, blueprint.socketSettings[joint.Name])
 
 			table.insert(sockets, socket)
-			socket.Name = motor6D.Name
+			socket.Name = joint.Name
 			socket.Parent = socketsFolder
 			table.insert(noCollisionConstraints, noCollisionConstraint)
-			noCollisionConstraint.Name = motor6D.Name
+			noCollisionConstraint.Name = joint.Name
 			noCollisionConstraint.Parent = noCollisionsFolder
 			trove:Add(attachment0)
 			trove:Add(attachment1)
