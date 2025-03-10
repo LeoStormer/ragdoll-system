@@ -48,7 +48,7 @@ export type SocketSetting = {
 }
 
 export type Blueprint = {
-	numLimbs: number,
+	numJoints: number,
 	socketSettings: { [string]: SocketSetting },
 	cframeOverrides: { [string]: { C0: CFrame, C1: CFrame } },
 	lowDetailModeJoints: { [string]: boolean }?,
