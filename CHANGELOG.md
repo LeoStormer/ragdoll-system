@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.1
+### Fixed
+
+- Fixed error causing the system to fail when constructing Ragdolls.
+
 ## 0.5.0
 ### Changed
 
