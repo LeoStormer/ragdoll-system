@@ -280,8 +280,8 @@ do
 		noCollisionsFolder: Folder,
 		blueprint: Types.Blueprint
 	)
-		local sockets = table.create(blueprint.numLimbs)
-		local noCollisionConstraints = table.create(blueprint.numLimbs)
+		local sockets = table.create(blueprint.numJoints)
+		local noCollisionConstraints = table.create(blueprint.numJoints)
 
 		for _, joint: Motor6D in motor6Ds do
 			local override = blueprint.cframeOverrides[joint.Name]
