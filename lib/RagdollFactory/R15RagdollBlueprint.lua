@@ -1,5 +1,4 @@
 local Blueprint = require(script.Parent.Parent.Blueprint)
-local Ragdoll = require(script.Parent.Ragdoll)
 
 local SHOULDER_SOCKET_SETTINGS =
 	{ MaxFrictionTorque = 150, UpperAngle = 50, TwistLowerAngle = -70, TwistUpperAngle = 160 }
@@ -8,25 +7,6 @@ local HIP_SOCKET_SETTINGS = { MaxFrictionTorque = 150, UpperAngle = 40, TwistLow
 local KNEE_SOCKET_SETTINGS = { MaxFrictionTorque = 150, UpperAngle = 0, TwistLowerAngle = -80, TwistUpperAngle = 5 }
 local WRIST_SOCKET_SETTINGS = { MaxFrictionTorque = 50, UpperAngle = 10, TwistLowerAngle = -45, TwistUpperAngle = 5 }
 local ANKLE_SOCKET_SETTINGS = { MaxFrictionTorque = 50, UpperAngle = 10, TwistLowerAngle = -45, TwistUpperAngle = 5 }
-
-function insertNoCollisionConstraint(ragdoll, limb0, limb1)
-	local noCollisionConstraint = Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone()
-	noCollisionConstraint.Part0 = limb0
-	noCollisionConstraint.Part1 = limb1
-	table.insert(ragdoll._noCollisionConstraints, noCollisionConstraint)
-	noCollisionConstraint.Parent = ragdoll._noCollisionConstraintFolder
-end
-
-function setupCollisionConstraints(ragdoll)
-	insertNoCollisionConstraint(ragdoll, ragdoll.Character.RightFoot, ragdoll.Character.RightUpperLeg)
-	insertNoCollisionConstraint(ragdoll, ragdoll.Character.RightUpperLeg, ragdoll.Character.UpperTorso)
-	insertNoCollisionConstraint(ragdoll, ragdoll.Character.RightLowerLeg, ragdoll.Character.UpperTorso)
-	insertNoCollisionConstraint(ragdoll, ragdoll.Character.LeftFoot, ragdoll.Character.LeftUpperLeg)
-	insertNoCollisionConstraint(ragdoll, ragdoll.Character.LeftUpperLeg, ragdoll.Character.UpperTorso)
-	insertNoCollisionConstraint(ragdoll, ragdoll.Character.LeftLowerLeg, ragdoll.Character.UpperTorso)
-	insertNoCollisionConstraint(ragdoll, ragdoll.Character.LeftHand, ragdoll.Character.LeftUpperArm)
-	insertNoCollisionConstraint(ragdoll, ragdoll.Character.RightHand, ragdoll.Character.RightUpperArm)
-end
 
 local R15RagdollBlueprint = setmetatable({
 	numJoints = 15, -- number of constraints created on an R15 Rig, this number was tested for.
@@ -69,7 +49,19 @@ function R15RagdollBlueprint.satisfiesRequirements(model: Model)
 end
 
 function R15RagdollBlueprint.finalTouches(ragdoll)
-	setupCollisionConstraints(ragdoll)
+	local isAvatarUpgrade = ragdoll.Character.Head.Neck:IsA("AnimationConstraint")
+	if isAvatarUpgrade then
+		return
+	end
+
+	ragdoll:_insertNoCollisionConstraint(ragdoll.Character.RightFoot, ragdoll.Character.RightUpperLeg)
+	ragdoll:_insertNoCollisionConstraint(ragdoll.Character.RightUpperLeg, ragdoll.Character.UpperTorso)
+	ragdoll:_insertNoCollisionConstraint(ragdoll.Character.RightLowerLeg, ragdoll.Character.UpperTorso)
+	ragdoll:_insertNoCollisionConstraint(ragdoll.Character.LeftFoot, ragdoll.Character.LeftUpperLeg)
+	ragdoll:_insertNoCollisionConstraint(ragdoll.Character.LeftUpperLeg, ragdoll.Character.UpperTorso)
+	ragdoll:_insertNoCollisionConstraint(ragdoll.Character.LeftLowerLeg, ragdoll.Character.UpperTorso)
+	ragdoll:_insertNoCollisionConstraint(ragdoll.Character.LeftHand, ragdoll.Character.LeftUpperArm)
+	ragdoll:_insertNoCollisionConstraint(ragdoll.Character.RightHand, ragdoll.Character.RightUpperArm)
 end
 
 return R15RagdollBlueprint :: Blueprint.Blueprint

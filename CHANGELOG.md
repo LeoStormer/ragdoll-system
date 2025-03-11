@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.0
+### Added
+
+- Added support for Rigs that use the new AnimationConstraint in the avatar upgrade beta.
+
 ## 0.5.1
 ### Fixed
 

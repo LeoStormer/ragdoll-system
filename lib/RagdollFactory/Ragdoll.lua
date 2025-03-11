@@ -21,7 +21,7 @@ local Trove = require(script.Parent.Parent.Parent.Trove)
 	._sockets  { BallSocketConstraint }
 	._limbs { BasePart } -- List of the Ragdoll's direct children BaseParts exluding the root part. 
 	._accessoryHandles { BasePart }
-	._motor6Ds { Motor6D } 
+	._joints { Motor6D | AnimationConstraint } 
 ]=]
 --[=[
 	@within Ragdoll
@@ -78,6 +78,8 @@ local ROOT_PART_PHYSICAL_PROPERTIES = PhysicalProperties.new(0.01, 0, 0, 0, 0)
 
 local BALLSOCKETCONSTRAINT_TEMPLATE: BallSocketConstraint = Instance.new("BallSocketConstraint")
 BALLSOCKETCONSTRAINT_TEMPLATE.Enabled = false
+BALLSOCKETCONSTRAINT_TEMPLATE.LimitsEnabled = true
+BALLSOCKETCONSTRAINT_TEMPLATE.TwistLimitsEnabled = true
 Ragdoll.BALLSOCKETCONSTRAINT_TEMPLATE = BALLSOCKETCONSTRAINT_TEMPLATE
 
 local NOCOLLISIONCONSTRAINT_TEMPLATE: NoCollisionConstraint = Instance.new("NoCollisionConstraint")
@@ -94,7 +96,9 @@ function recordOriginalSettings(
 	humanoidRootPart: BasePart,
 	limbs: { BasePart },
 	accessoryHandles: { BasePart },
-	motor6Ds: { Motor6D }
+	joints: { Joint },
+	ballSocketConstraints: { BallSocketConstraint },
+	noCollisionConstraints: { NoCollisionConstraint }
 )
 	local originalSettings = {}
 	originalSettings[humanoid] = { WalkSpeed = humanoid.WalkSpeed, AutoRotate = humanoid.AutoRotate }
@@ -117,8 +121,20 @@ function recordOriginalSettings(
 			{ CanCollide = handle.CanCollide, CanTouch = handle.CanTouch, Massless = handle.Massless }
 	end
 
-	for _, motor6D in motor6Ds do
-		originalSettings[motor6D] = { Enabled = motor6D.Enabled }
+	for _, joint in joints do
+		originalSettings[joint] = { Enabled = joint.Enabled }
+	end
+
+	for _, ballSocketConstraint in ballSocketConstraints do
+		originalSettings[ballSocketConstraint] = {
+			Enabled = ballSocketConstraint.Enabled,
+			Attachment0 = ballSocketConstraint.Attachment0,
+			Attachment1 = ballSocketConstraint.Attachment1,
+		}
+	end
+
+	for _, noCollisionConstraint in noCollisionConstraints do
+		originalSettings[noCollisionConstraint] = { Enabled = noCollisionConstraint.Enabled }
 	end
 
 	return originalSettings
@@ -130,7 +146,7 @@ function constructRagdoll(
 	humanoidRootPart: BasePart,
 	limbs: { BasePart },
 	accessoryHandles: { BasePart },
-	motor6Ds: { Motor6D },
+	joints: { Joint },
 	blueprint: Types.Blueprint,
 	trove,
 	constraintsFolder: Folder,
@@ -142,7 +158,15 @@ function constructRagdoll(
 	humanoid.AutomaticScalingEnabled = false
 	humanoid.BreakJointsOnDeath = false
 
-	local originalSettings = recordOriginalSettings(humanoid, humanoidRootPart, limbs, accessoryHandles, motor6Ds)
+	local originalSettings = recordOriginalSettings(
+		humanoid,
+		humanoidRootPart,
+		limbs,
+		accessoryHandles,
+		joints,
+		sockets,
+		noCollisionConstraints
+	)
 
 	local ragdoll = setmetatable({
 		Character = character,
@@ -165,17 +189,18 @@ function constructRagdoll(
 		_originalSettings = originalSettings,
 		_limbs = limbs,
 		_accessoryHandles = accessoryHandles,
-		_motor6Ds = motor6Ds,
+		_joints = joints,
 		_lowDetailModeSockets = if blueprint.lowDetailModeJoints
-			then TableUtils.filter(sockets, function(socket: BallSocketConstraint)
-				return blueprint.lowDetailModeJoints[socket.Name]
+			then TableUtils.filter(sockets, function(socket)
+				local jointName = string.gsub(socket.Name, "BallSocket", "")
+				return blueprint.lowDetailModeJoints[jointName]
 			end)
 			else sockets,
-		_lowDetailMotor6Ds = if blueprint.lowDetailModeJoints
-			then TableUtils.filter(motor6Ds, function(motor: Motor6D)
-				return blueprint.lowDetailModeJoints[motor.Name]
+		_lowDetailJoints = if blueprint.lowDetailModeJoints
+			then TableUtils.filter(joints, function(joint)
+				return blueprint.lowDetailModeJoints[joint.Name]
 			end)
-			else motor6Ds,
+			else joints,
 	}, Ragdoll)
 
 	trove:Connect(humanoid.StateChanged, function(old, new)
@@ -214,6 +239,7 @@ function getCharacterComponents(character: Model)
 	local humanoid = character:WaitForChild("Humanoid")
 	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 	local children = character:GetChildren()
+	local descendants = character:GetDescendants()
 
 	local limbs = TableUtils.filter(children, function(limb)
 		return limb:IsA("BasePart") and limb.Name ~= "HumanoidRootPart"
@@ -223,44 +249,45 @@ function getCharacterComponents(character: Model)
 		TableUtils.filter(children, function(accessory)
 			return accessory:IsA("Accessory")
 		end),
-		function(accessory: Accessory)
+		function(accessory)
 			return accessory:FindFirstChild("Handle")
 		end
 	)
 
-	local motor6Ds = TableUtils.filter(character:GetDescendants(), function(motor)
-		return motor:IsA("Motor6D")
+	local joints = TableUtils.filter(descendants, function(motor)
+		return motor:IsA("Motor6D") or motor:IsA("AnimationConstraint")
+	end) :: { Joint }
+
+	local ballSocketConstraints = TableUtils.filter(descendants, function(socket)
+		return socket:IsA("BallSocketConstraint")
 	end)
 
-	return humanoid, humanoidRootPart, limbs, accessoryHandles, motor6Ds
+	local noCollisionConstraints = TableUtils.filter(descendants, function(constraint)
+		return constraint:IsA("NoCollisionConstraint")
+	end)
+
+	return humanoid, humanoidRootPart, limbs, accessoryHandles, joints, ballSocketConstraints, noCollisionConstraints
 end
 
 do
-	local function createConstraints(
-		joint: Motor6D,
-		cframe0: CFrame,
-		cframe1: CFrame,
+	local function createNoCollisionConstraint(joint: Joint, limb0: BasePart, limb1: BasePart)
+		local noCollisionConstraint = Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone()
+		noCollisionConstraint.Name = `{joint.Name}NoCollision`
+		noCollisionConstraint.Part0 = limb0
+		noCollisionConstraint.Part1 = limb1
+		return noCollisionConstraint
+	end
+
+	local function createBallSocketConstraint(
+		joint: Joint,
+		attachment0: Attachment,
+		attachment1: Attachment,
 		socketSetting: Types.SocketSetting
 	)
-		local sourceLimb = joint.Part0
-		local affectedLimb = joint.Part1
-		local noCollisionConstraint = Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone()
-		noCollisionConstraint.Part0 = sourceLimb
-		noCollisionConstraint.Part1 = affectedLimb
-
-		local attachment0 = Instance.new("Attachment")
-		attachment0.CFrame = cframe0
-		attachment0.Parent = sourceLimb
-
-		local attachment1 = Instance.new("Attachment")
-		attachment1.CFrame = cframe1
-		attachment1.Parent = affectedLimb
-
 		local socket = Ragdoll.BALLSOCKETCONSTRAINT_TEMPLATE:Clone()
+		socket.Name = `{joint.Name}BallSocket`
 		socket.Attachment0 = attachment0
 		socket.Attachment1 = attachment1
-		socket.LimitsEnabled = true
-		socket.TwistLimitsEnabled = true
 
 		if socketSetting ~= nil then
 			for key, value in socketSetting do
@@ -270,34 +297,76 @@ do
 			end
 		end
 
-		return socket, noCollisionConstraint, attachment0, attachment1
+		return socket
+	end
+
+	local function getMotor6DAttachment0(motor: Motor6D)
+		local _, attachment: Attachment? = TableUtils.find((motor.Part0 :: BasePart):GetChildren(), function(inst)
+			return inst:IsA("Attachment") and inst.CFrame == motor.C0
+		end)
+		return attachment
+	end
+
+	local function getMotor6DAttachment1(motor: Motor6D)
+		local _, attachment: Attachment? = TableUtils.find((motor.Part1 :: BasePart):GetChildren(), function(inst)
+			return inst:IsA("Attachment") and inst.CFrame == motor.C1
+		end)
+		return attachment
 	end
 
 	local function setupLimbs(
 		trove,
-		motor6Ds: { Motor6D },
+		joints: { Joint },
 		socketsFolder: Folder,
 		noCollisionsFolder: Folder,
-		blueprint: Types.Blueprint
+		blueprint: Types.Blueprint,
+		sockets: { BallSocketConstraint },
+		noCollisionConstraints: { NoCollisionConstraint }
 	)
-		local sockets = table.create(blueprint.numJoints)
-		local noCollisionConstraints = table.create(blueprint.numJoints)
+		for _, joint in joints do
+			local _, noCollisionConstraint = TableUtils.find(noCollisionConstraints, function(constraint)
+				return string.match(constraint.Name, joint.Name) ~= nil
+			end)
+			local limb0 = if joint:IsA("Motor6D") then joint.Part0 else (joint.Attachment0 :: Attachment).Parent
+			local limb1 = if joint:IsA("Motor6D") then joint.Part1 else (joint.Attachment1 :: Attachment).Parent
+			if noCollisionConstraint == nil then
+				noCollisionConstraint = createNoCollisionConstraint(joint, limb0, limb1)
+				table.insert(noCollisionConstraints, noCollisionConstraint)
+				noCollisionConstraint.Parent = noCollisionsFolder
+			end
 
-		for _, joint: Motor6D in motor6Ds do
+			local _, ballSocketConstraint = TableUtils.find(sockets, function(constraint)
+				return string.match(constraint.Name, joint.Name) ~= nil
+			end)
 			local override = blueprint.cframeOverrides[joint.Name]
-			local cframe0 = if override then override.C0 else joint.C0
-			local cframe1 = if override then override.C1 else joint.C1
-			local socket, noCollisionConstraint, attachment0, attachment1 =
-				createConstraints(joint, cframe0, cframe1, blueprint.socketSettings[joint.Name])
+			if ballSocketConstraint == nil then
+				local attachment0 = if joint:IsA("AnimationConstraint")
+					then joint.Attachment0
+					else getMotor6DAttachment0(joint)
+				if override or attachment0 == nil then
+					-- override == nil and attachment == nil if and only if joint was a motor6D and no attachment was found whose CFrame matches joint.C0
+					attachment0 = Instance.new("Attachment")
+					attachment0.CFrame = if override then override.C0 else joint.C0
+					attachment0.Parent = limb0
+					trove:Add(attachment0)
+				end
 
-			table.insert(sockets, socket)
-			socket.Name = joint.Name
-			socket.Parent = socketsFolder
-			table.insert(noCollisionConstraints, noCollisionConstraint)
-			noCollisionConstraint.Name = joint.Name
-			noCollisionConstraint.Parent = noCollisionsFolder
-			trove:Add(attachment0)
-			trove:Add(attachment1)
+				local attachment1 = if joint:IsA("AnimationConstraint")
+					then joint.Attachment1
+					else getMotor6DAttachment1(joint)
+				if override or attachment1 == nil then
+					-- same story as above
+					attachment1 = Instance.new("Attachment")
+					attachment1.CFrame = if override then override.C1 else joint.C1
+					attachment1.Parent = limb1
+					trove:Add(attachment1)
+				end
+
+				ballSocketConstraint =
+					createBallSocketConstraint(joint, attachment0, attachment1, blueprint.socketSettings[joint.Name])
+				table.insert(sockets, ballSocketConstraint)
+				ballSocketConstraint.Parent = socketsFolder
+			end
 		end
 
 		return sockets, noCollisionConstraints
@@ -305,7 +374,8 @@ do
 
 	--@ignore
 	function Ragdoll.new(character: Model, blueprint): Ragdoll
-		local humanoid, humanoidRootPart, limbs, accessoryHandles, motor6Ds = getCharacterComponents(character)
+		local humanoid, humanoidRootPart, limbs, accessoryHandles, joints, sockets, noCollisionConstraints =
+			getCharacterComponents(character)
 		local trove = Trove.new()
 		local constraintsFolder = trove:Add(Instance.new("Folder"))
 		constraintsFolder.Name = "RagdollConstraints"
@@ -318,9 +388,8 @@ do
 		constraintsFolder.Parent = character
 
 		character:SetAttribute("Ragdolled", false)
-
-		local sockets, noCollisionConstraints =
-			setupLimbs(trove, motor6Ds, socketsFolder, noCollisionsfolder, blueprint)
+		sockets, noCollisionConstraints =
+			setupLimbs(trove, joints, socketsFolder, noCollisionsfolder, blueprint, sockets, noCollisionConstraints)
 
 		local self = constructRagdoll(
 			character,
@@ -328,7 +397,7 @@ do
 			humanoidRootPart,
 			limbs,
 			accessoryHandles,
-			motor6Ds,
+			joints,
 			blueprint,
 			trove,
 			constraintsFolder,
@@ -346,12 +415,13 @@ end
 
 --@ignore
 function Ragdoll.replicate(character: Model, blueprint): Ragdoll
-	local humanoid, humanoidRootPart, limbs, accessoryHandles, motor6Ds = getCharacterComponents(character)
-	local trove = Trove.new()
-
 	local constraintsFolder = character:WaitForChild("RagdollConstraints")
 	local socketsFolder = constraintsFolder:WaitForChild("BallSocketConstraints")
 	local noCollisionConstraintsFolder = constraintsFolder:WaitForChild("NoCollisionConstraints")
+
+	local humanoid, humanoidRootPart, limbs, accessoryHandles, joints, ballSocketConstraints, noCollisionConstraints =
+		getCharacterComponents(character)
+	local trove = Trove.new()
 
 	local self = constructRagdoll(
 		character,
@@ -359,21 +429,28 @@ function Ragdoll.replicate(character: Model, blueprint): Ragdoll
 		humanoidRootPart,
 		limbs,
 		accessoryHandles,
-		motor6Ds,
+		joints,
 		blueprint,
 		trove,
 		constraintsFolder,
 		socketsFolder,
 		noCollisionConstraintsFolder,
-		socketsFolder:GetChildren(),
-		noCollisionConstraintsFolder:GetChildren()
+		ballSocketConstraints,
+		noCollisionConstraints
 	)
 
 	return self
 end
 
 --@ignore
-function Ragdoll._activateRagdollPhysics(ragdoll, accessoryHandles, motor6Ds, limbs, noCollisionConstraints, sockets)
+function Ragdoll._activateRagdollPhysics(
+	ragdoll,
+	accessoryHandles,
+	joints: { Joint },
+	limbs,
+	noCollisionConstraints,
+	sockets
+)
 	if ragdoll._ragdolled then
 		return
 	end
@@ -393,8 +470,8 @@ function Ragdoll._activateRagdollPhysics(ragdoll, accessoryHandles, motor6Ds, li
 		handle.Massless = true
 	end
 
-	for _, motor6D: Motor6D in motor6Ds do
-		motor6D.Enabled = false
+	for _, joint in joints do
+		joint.Enabled = false
 	end
 
 	for _, limb in limbs do
@@ -414,13 +491,27 @@ function Ragdoll._activateRagdollPhysics(ragdoll, accessoryHandles, motor6Ds, li
 end
 
 --[=[
+	@private
+	Inserts a NoCollisionConstraint into the ragdoll. Used to fine-tune the ragdoll's limb collisions. 
+]=]
+function Ragdoll:_insertNoCollisionConstraint(limb0, limb1)
+	local noCollisionConstraint = Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone()
+	noCollisionConstraint.Part0 = limb0
+	noCollisionConstraint.Part1 = limb1
+	table.insert(self._noCollisionConstraints, noCollisionConstraint)
+	noCollisionConstraint.Name = `{limb0.Name}{limb1.Name}NoCollision`
+	noCollisionConstraint.Parent = self._noCollisionConstraintFolder
+	self._originalSettings[noCollisionConstraint] = { Enabled = false }
+end
+
+--[=[
 	Activates ragdoll physics.
 ]=]
 function Ragdoll:activateRagdollPhysics()
 	Ragdoll._activateRagdollPhysics(
 		self,
 		self._accessoryHandles,
-		self._motor6Ds,
+		self._joints,
 		self._limbs,
 		self._noCollisionConstraints,
 		self._sockets
@@ -434,7 +525,7 @@ function Ragdoll:activateRagdollPhysicsLowDetail()
 	Ragdoll._activateRagdollPhysics(
 		self,
 		self._accessoryHandles,
-		self._lowDetailMotor6Ds,
+		self._lowDetailJoints,
 		self._limbs,
 		self._noCollisionConstraints,
 		self._lowDetailModeSockets
@@ -464,8 +555,8 @@ function Ragdoll:deactivateRagdollPhysics()
 		handle.Massless = self._originalSettings[handle].Massless
 	end
 
-	for _, motor6D: Motor6D in self._motor6Ds do
-		motor6D.Enabled = self._originalSettings[motor6D].Enabled
+	for _, joint: Motor6D in self._joints do
+		joint.Enabled = self._originalSettings[joint].Enabled
 	end
 
 	for _, limb in self._limbs do
@@ -474,11 +565,11 @@ function Ragdoll:deactivateRagdollPhysics()
 	end
 
 	for _, constraint: Constraint in self._noCollisionConstraints do
-		constraint.Enabled = false
+		constraint.Enabled = self._originalSettings[constraint].Enabled
 	end
 
 	for _, socket: Constraint in self._sockets do
-		socket.Enabled = false
+		socket.Enabled = self._originalSettings[socket].Enabled
 	end
 
 	self.RagdollEnded:Fire()
@@ -575,6 +666,8 @@ end
 	Alias for destroy().
 ]=]
 Ragdoll.Destroy = Ragdoll.destroy
+
+type Joint = AnimationConstraint | Motor6D
 
 export type Ragdoll = Types.Ragdoll
 
