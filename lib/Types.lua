@@ -5,9 +5,11 @@ export type SystemSettings = {
 	LowDetailModeThreshold: number,
 	--- The interval in seconds between ragdoll distance checks while collapsed.
 	CollapseTimeoutInterval: number,
-	--- The minimum distance in studs a ragdoll must have moved between distance checks to remain collapsed.
+	--- The minimum distance in studs a ragdoll must have moved between
+	--- distance checks to remain collapsed.
 	CollapseTimeoutDistanceThreshold: number,
-	--- Whether the system freezes ragdolls if dead when they are being timed out of collapse. If false they remain collapsed.
+	--- Whether the system freezes ragdolls if dead when they are being timed
+	--- out of collapse. If false they remain collapsed.
 	FreezeIfDead: boolean,
 }
 
@@ -24,7 +26,8 @@ export type RagdollInternals = {
 	_limbs: { BasePart },
 	_accessoryHandles: { BasePart },
 	_joints: { AnimationConstraint | Motor6D },
-	--- Inserts a NoCollisionConstraint into the ragdoll. Used to fine-tune the ragdoll's limb collisions
+	--- Inserts a NoCollisionConstraint into the ragdoll. Used to fine-tune the
+	--- ragdoll's limb collisions
 	_insertNoCollisionConstraint: (self: Ragdoll, limb0: BasePart, limb2: BasePart) -> (),
 }
 
@@ -74,9 +77,11 @@ export type Ragdoll = {
 	activateRagdollPhysicsLowDetail: (self: Ragdoll) -> (),
 	--- Deactivates ragdoll physics.
 	deactivateRagdollPhysics: (self: Ragdoll) -> (),
-	--- Activates ragdoll physics, then deactivates it when the ragdoll has remained still.
+	--- Activates ragdoll physics, then deactivates it when the ragdoll has
+	--- remained still.
 	collapse: (self: Ragdoll) -> (),
-	--- Activates ragdoll physics in low detail mode, then deactivates it when the ragdoll has remained still.
+	--- Activates ragdoll physics in low detail mode, then deactivates it when
+	--- the ragdoll has remained still.
 	collapseLowDetail: (self: Ragdoll) -> (),
 	--- Anchors all of the ragdoll's BaseParts.
 	freeze: (self: Ragdoll) -> (),
@@ -98,7 +103,7 @@ export type SocketSetting = {
 export type Blueprint = {
 	numJoints: number,
 	socketSettings: { [string]: SocketSetting },
-	cframeOverrides: { [string]: { C0: CFrame, C1: CFrame } },
+	cframeOverrides: { [string]: { C0: CFrame, C1: CFrame }? },
 	lowDetailModeJoints: { [string]: boolean }?,
 	satisfiesRequirements: (Model) -> boolean,
 	finalTouches: (RagdollInternals & Ragdoll) -> (),

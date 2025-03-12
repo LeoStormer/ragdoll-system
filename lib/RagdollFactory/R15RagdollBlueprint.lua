@@ -9,7 +9,7 @@ local WRIST_SOCKET_SETTINGS = { MaxFrictionTorque = 50, UpperAngle = 10, TwistLo
 local ANKLE_SOCKET_SETTINGS = { MaxFrictionTorque = 50, UpperAngle = 10, TwistLowerAngle = -45, TwistUpperAngle = 5 }
 
 local R15RagdollBlueprint = setmetatable({
-	numJoints = 15, -- number of constraints created on an R15 Rig, this number was tested for.
+	numJoints = 15,
 	socketSettings = {
 		Neck = { MaxFrictionTorque = 150, UpperAngle = 45, TwistLowerAngle = -30, TwistUpperAngle = 30 },
 		Waist = { MaxFrictionTorque = 50, UpperAngle = 20, TwistLowerAngle = -10, TwistUpperAngle = 30 },

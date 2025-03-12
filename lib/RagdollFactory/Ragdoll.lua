@@ -62,7 +62,7 @@ local Trove = require(script.Parent.Parent.Parent.Trove)
 	@within Ragdoll
 	@readonly
 	@prop Character Model
-	The model this ragdoll corresponds to.
+	The model this ragdoll wraps.
 ]=]
 --[=[
 	@within Ragdoll
@@ -121,12 +121,12 @@ local BALLSOCKETCONSTRAINT_TEMPLATE: BallSocketConstraint = Instance.new("BallSo
 BALLSOCKETCONSTRAINT_TEMPLATE.Enabled = false
 BALLSOCKETCONSTRAINT_TEMPLATE.LimitsEnabled = true
 BALLSOCKETCONSTRAINT_TEMPLATE.TwistLimitsEnabled = true
+
 local NOCOLLISIONCONSTRAINT_TEMPLATE: NoCollisionConstraint = Instance.new("NoCollisionConstraint")
 NOCOLLISIONCONSTRAINT_TEMPLATE.Enabled = false
 
 local Ragdoll = {}
 Ragdoll.__index = Ragdoll
-
 Ragdoll.BALLSOCKETCONSTRAINT_TEMPLATE = BALLSOCKETCONSTRAINT_TEMPLATE
 Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE = NOCOLLISIONCONSTRAINT_TEMPLATE
 
