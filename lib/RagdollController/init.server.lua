@@ -116,7 +116,7 @@ function onRagdollAdded(ragdollModel: Model)
 end
 
 for _, ragdollModel in CollectionService:GetTagged("Ragdoll") do
-	onRagdollAdded(ragdollModel)
+	task.spawn(onRagdollAdded, ragdollModel)
 end
 
 CollectionService:GetInstanceAddedSignal("Ragdoll"):Connect(onRagdollAdded)

@@ -75,7 +75,7 @@ function onRagdollAdded(ragdollModel)
 end
 
 for _, ragdollModel in CollectionService:GetTagged("Ragdoll") do
-	onRagdollAdded(ragdollModel)
+	task.spawn(onRagdollAdded, ragdollModel)
 end
 
 CollectionService:GetInstanceAddedSignal("Ragdoll"):Connect(onRagdollAdded)
@@ -93,7 +93,7 @@ function onPlayerAdded(player: Player)
 end
 
 for _, player in Players:GetPlayers() do
-	onPlayerAdded(player)
+	task.spawn(onPlayerAdded, player)
 end
 
 Players.PlayerAdded:Connect(onPlayerAdded)
