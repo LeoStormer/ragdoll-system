@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1
+### Fixed
+
+- Fixed ragdoll replication bug caused by unsafe yielding during RagdollController script initialization.
+
 ## 0.6.0
 ### Added
 
