@@ -12,32 +12,13 @@ local Types = require(script.Types)
 --[=[
 	@within RagdollSystem
 	@private
-	@interface Remotes
-	.ActivateRagdoll RemoteEvent
-	.DeactivateRagdoll RemoteEvent
-	.CollapseeRagdoll RemoteEvent
-]=]
---[=[
-	@within RagdollSystem
-	@private
-	@prop Remotes Remotes
+	@prop Remotes { ActivateRagdoll: RemoteEvent, DeactivateRagdoll: RemoteEvent, CollapseeRagdoll: RemoteEvent, }
 ]=]
 --[=[
 	@within RagdollSystem
 	@private
 	@external Signal https://sleitnick.github.io/RbxUtil/api/Signal/
-	@interface Signals
-	.ActivateLocalRagdoll Signal
-	.DeactivateLocalRagdoll Signal
-	.CollapseLocalRagdoll Signal
-	.ActivateRagdoll Signal
-	.DeactivateRagdoll Signal
-	.CollapseRagdoll Signal
-]=]
---[=[
-	@within RagdollSystem
-	@private
-	@prop Signals Signals
+	@prop Signals { ActivateLocalRagdoll: Signal, DeactivateLocalRagdoll: Signal, CollapseLocalRagdoll: Signal, ActivateRagdoll: Signal, DeactivateRagdoll: Signal, CollapsRagdoll: Signal}
 ]=]
 --[=[
 	@within RagdollSystem
@@ -53,7 +34,7 @@ local Types = require(script.Types)
 	@within RagdollSystem
 	@readonly
 	@prop RagdollConstructed Signal
-	Fires when a ragdoll is constructed by the factory.
+	Fires when a ragdoll is constructed by the Ragdoll Factory.
 
 	```lua
 	RagdollSystem.RagdollConstructed:Connect(function(ragdoll: Ragdoll)
@@ -84,11 +65,14 @@ RagdollSystem._ragdolls = {}
 
 --[=[
 	@within RagdollSystem
-	@interface SystemSettings
-	.LowDetailModeThreshold number? --The number of active ragdolls before the system starts using low detail mode.
-	.CollapseTimoutInterval number? -- The interval in seconds between ragdoll distance checks while collapsed.
-	.CollapseTimeoutDistanceThreshold number? -- The minimum distance in studs a ragdoll must have moved between distance checks to remain collapsed.
-	.FreezeIfDead boolean? -- Whether the system freezes ragdolls if dead when they are being timed out of collapse. If false they remain collapsed.
+	@type SystemSettings { LowDetailModeThreshold: number, CollapseTimoutInterval: number, CollapseTimeoutDistanceThreshold: number, FreezeIfDead: boolean, }
+	LowDetailModeThreshold is the number of active ragdolls before the system 
+	starts using low detail mode. CollapseTimeoutInterval is the interval in 
+	seconds between ragdoll distance checks while collapsed.
+	CollapseTimeoutDistanceThreshold is the minimum distance in studs a ragdoll
+	must have moved between distance checks to remain collapsed. FreezeIfDead 
+	determines whether the system freezes ragdolls when they are being
+	timed out of collapse if they are dead. If false they remain collapsed.
 ]=]
 local defaultSettings = table.freeze({
 	LowDetailModeThreshold = 15,
@@ -101,21 +85,38 @@ local systemSettings
 
 --[=[
 	@param settingsDictionary SystemSettings
+	Sets the settings of the system, all fields are optional. If a field is not
+	provided, it remains unchanged.
+
+	```lua
+		RagdollSystem:setSystemSettings({
+			FreezeIfDead = false,
+		}) -- This is ok.
+	```
 ]=]
-function RagdollSystem:setSystemSettings(settingsDictionary: SystemSettings)
+function RagdollSystem:setSystemSettings(settingsDictionary: {
+	LowDetailModeThreshold: number?,
+	CollapseTimeoutInterval: number?,
+	CollapseTimeoutDistanceThreshold: number?,
+	FreezeIfDead: boolean?,
+})
 	local newSettings = {}
 	newSettings.LowDetailModeThreshold = if settingsDictionary.LowDetailModeThreshold
 			and typeof(settingsDictionary.LowDetailModeThreshold) == "number"
+			and settingsDictionary.LowDetailModeThreshold == settingsDictionary.LowDetailModeThreshold
 		then settingsDictionary.LowDetailModeThreshold
 		else defaultSettings.LowDetailModeThreshold
 
 	newSettings.CollapseTimeoutInterval = if settingsDictionary.CollapseTimeoutInterval
 			and typeof(settingsDictionary.CollapseTimeoutInterval) == "number"
+			and settingsDictionary.CollapseTimeoutInterval == settingsDictionary.CollapseTimeoutInterval
 		then settingsDictionary.CollapseTimeoutInterval
 		else defaultSettings.CollapseTimeoutInterval
 
 	newSettings.CollapseTimeoutDistanceThreshold = if settingsDictionary.CollapseTimeoutDistanceThreshold
 			and typeof(settingsDictionary.CollapseTimeoutDistanceThreshold) == "number"
+			and settingsDictionary.CollapseTimeoutDistanceThreshold
+				== settingsDictionary.CollapseTimeoutDistanceThreshold
 		then settingsDictionary.CollapseTimeoutDistanceThreshold
 		else defaultSettings.CollapseTimeoutDistanceThreshold
 
@@ -124,7 +125,7 @@ function RagdollSystem:setSystemSettings(settingsDictionary: SystemSettings)
 		then settingsDictionary.FreezeIfDead
 		else defaultSettings.FreezeIfDead
 
-	systemSettings = table.freeze(newSettings)
+	systemSettings = table.freeze(newSettings) :: Types.SystemSettings
 end
 
 RagdollSystem:setSystemSettings(script:GetAttributes())

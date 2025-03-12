@@ -9,19 +9,54 @@ local Trove = require(script.Parent.Parent.Parent.Trove)
 --[=[
 	@class Ragdoll
 	@__index Ragdoll
+	This class wraps around a Model and enables ragdoll physics by finding or
+	creating physics constraints for it based on a [Blueprint]. The [Model] must
+	contain a [Humanoid], a HumanoidRootPart, and have [Motor6D] or
+	[AnimationConstraint] descendants as joints.
 ]=]
 --[=[
 	@within Ragdoll
 	@private
-	@interface RagdollInternals
-	._constraintsFolder Folder -- Root Folder
-	._noCollisionConstraintFolder Folder -- Parent Folder to the Ragdoll's NoCollisionConstraints
-	._socketFolder Folder -- Parent folder to the Ragdoll's BallSocketConstraints
-	._noCollisionConstraints { NoCollisionConstraint }.
-	._sockets  { BallSocketConstraint }
-	._limbs { BasePart } -- List of the Ragdoll's direct children BaseParts exluding the root part. 
-	._accessoryHandles { BasePart }
-	._joints { Motor6D | AnimationConstraint } 
+	@prop _constraintsFolder Folder
+	The root container for the ragdoll's internally created constraints.
+]=]
+--[=[
+	@within Ragdoll
+	@private
+	@prop _noCollisionConstraintsFolder Folder
+	The folder containing all internally created NoCollisionConstraints.
+]=]
+--[=[
+	@within Ragdoll
+	@private
+	@prop _socketFolder Folder
+	The folder containing all internally created BallSocketConstraints.
+]=]
+--[=[
+	@within Ragdoll
+	@private
+	@prop _noCollisionConstraints { NoCollisionConstraint }
+]=]
+--[=[
+	@within Ragdoll
+	@private
+	@prop _sockets { BallSocketConstraint }
+]=]
+--[=[
+	@within Ragdoll
+	@private
+	@prop _limbs { BasePart }
+	Array of the Ragdoll's direct children BaseParts exluding the root part.
+]=]
+--[=[
+	@within Ragdoll
+	@private
+	@prop _accessoryHandles { BasePart }
+]=]
+--[=[
+	@within Ragdoll
+	@private
+	@prop _joints { AnimationConstraint | Motor6D }
 ]=]
 --[=[
 	@within Ragdoll
@@ -33,18 +68,20 @@ local Trove = require(script.Parent.Parent.Parent.Trove)
 	@within Ragdoll
 	@readonly
 	@prop Humanoid Humanoid
+	The Humanoid descendant of this Ragdoll's Character.
 ]=]
 --[=[
 	@within Ragdoll
 	@readonly
 	@prop HumanoidRootPart BasePart
+	The root part of this Ragdoll's Character.
 ]=]
 --[=[
 	@within Ragdoll
 	@readonly
 	@prop RagdollBegan Signal
 	
-	An signal fired when ragdoll physics has begun.
+	A signal fired when ragdoll physics has begun.
 
 	```lua
 		ragdoll.RagdollBegan:Connect(function()
@@ -67,11 +104,15 @@ local Trove = require(script.Parent.Parent.Parent.Trove)
 --[=[
 	@within Ragdoll
 	@readonly
+	@prop Collapsed Signal
+	A signal fired when ragdoll:collapse() is called.
+]=]
+--[=[
+	@within Ragdoll
+	@readonly
 	@prop Destroying Signal
 	A signal fired when ragdoll:destroy() is called.
 ]=]
-local Ragdoll = {}
-Ragdoll.__index = Ragdoll
 
 local LIMB_PHYSICAL_PROPERTIES = PhysicalProperties.new(5, 0.7, 0.5, 100, 100)
 local ROOT_PART_PHYSICAL_PROPERTIES = PhysicalProperties.new(0.01, 0, 0, 0, 0)
@@ -80,10 +121,13 @@ local BALLSOCKETCONSTRAINT_TEMPLATE: BallSocketConstraint = Instance.new("BallSo
 BALLSOCKETCONSTRAINT_TEMPLATE.Enabled = false
 BALLSOCKETCONSTRAINT_TEMPLATE.LimitsEnabled = true
 BALLSOCKETCONSTRAINT_TEMPLATE.TwistLimitsEnabled = true
-Ragdoll.BALLSOCKETCONSTRAINT_TEMPLATE = BALLSOCKETCONSTRAINT_TEMPLATE
-
 local NOCOLLISIONCONSTRAINT_TEMPLATE: NoCollisionConstraint = Instance.new("NoCollisionConstraint")
 NOCOLLISIONCONSTRAINT_TEMPLATE.Enabled = false
+
+local Ragdoll = {}
+Ragdoll.__index = Ragdoll
+
+Ragdoll.BALLSOCKETCONSTRAINT_TEMPLATE = BALLSOCKETCONSTRAINT_TEMPLATE
 Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE = NOCOLLISIONCONSTRAINT_TEMPLATE
 
 local ACCEPTABLE_RAGDOLL_STATES = {
@@ -128,8 +172,6 @@ function recordOriginalSettings(
 	for _, ballSocketConstraint in ballSocketConstraints do
 		originalSettings[ballSocketConstraint] = {
 			Enabled = ballSocketConstraint.Enabled,
-			Attachment0 = ballSocketConstraint.Attachment0,
-			Attachment1 = ballSocketConstraint.Attachment1,
 		}
 	end
 
@@ -494,7 +536,7 @@ end
 	@private
 	Inserts a NoCollisionConstraint into the ragdoll. Used to fine-tune the ragdoll's limb collisions. 
 ]=]
-function Ragdoll:_insertNoCollisionConstraint(limb0, limb1)
+function Ragdoll:_insertNoCollisionConstraint(limb0: BasePart, limb1: BasePart)
 	local noCollisionConstraint = Ragdoll.NOCOLLISIONCONSTRAINT_TEMPLATE:Clone()
 	noCollisionConstraint.Part0 = limb0
 	noCollisionConstraint.Part1 = limb1
