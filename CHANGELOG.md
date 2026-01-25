@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.2
+## Changed 
+
+- Separated ragdoll construction logic from ragdoll control logic
+
+## Added
+
+- Internal class RagdollBuilder that handles the construction details of ragdoll rigs from blueprints
+
 ## 0.6.1
 ### Fixed
 
@@ -23,6 +32,11 @@
 - Blueprint.numLimbs -> Blueprint.numJoints.
 
 ## 0.4.0
+### Changed
+
+- Player ragdolls are now created, stored, and removed the same way npc ragdolls are.
+- Ragdolls are now unfrozen and their physics deactivated when their humanoid exits the Dead state.
+
 ### Added
 
 - Ragdoll.replicate(Model, Blueprint?), creates a ragdoll from a model that already has its constraints constructed.
@@ -37,11 +51,6 @@
 - ReplicatedRagdoll class
 - RagdollSystem:addPlayerRagdoll(Player, Model)
 - RagdollSystem:removePlayerRagdoll(Player)
-
-### Changed
-
-- Player ragdolls are now created, stored, and removed the same way npc ragdolls are.
-- Ragdolls are now unfrozen and their physics deactivated when their humanoid exits the Dead state.
 
 ### Fixed
 
