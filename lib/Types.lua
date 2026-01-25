@@ -1,5 +1,7 @@
 local Signal = require(script.Parent.Parent.Signal)
 
+export type Joint = AnimationConstraint | Motor6D
+
 export type SystemSettings = {
 	--- The number of active ragdolls before the system starts using low detail mode.
 	LowDetailModeThreshold: number,
@@ -25,7 +27,7 @@ export type RagdollInternals = {
 	--- Array of the Ragdoll's direct children BaseParts exluding the root part.
 	_limbs: { BasePart },
 	_accessoryHandles: { BasePart },
-	_joints: { AnimationConstraint | Motor6D },
+	_joints: { Joint },
 	--- Inserts a NoCollisionConstraint into the ragdoll. Used to fine-tune the
 	--- ragdoll's limb collisions
 	_insertNoCollisionConstraint: (self: Ragdoll, limb0: BasePart, limb2: BasePart) -> (),
