@@ -1,11 +1,11 @@
 # Changelog
 
 ## 0.6.2
-## Changed 
+### Changed 
 
 - Separated ragdoll construction logic from ragdoll control logic
 
-## Added
+### Added
 
 - Internal class RagdollBuilder that handles the construction details of ragdoll rigs from blueprints
 
