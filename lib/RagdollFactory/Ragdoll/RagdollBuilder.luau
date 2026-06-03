@@ -1,8 +1,6 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local TableUtils = require(ReplicatedStorage.Packages.RagdollSystem.TableUtils)
-local Types = require(ReplicatedStorage.Packages.RagdollSystem.Types)
-local Signal = require(ReplicatedStorage.Packages.Signal)
+local TableUtils = require(script.Parent.Parent.Parent.TableUtils)
+local Types = require(script.Parent.Parent.Parent.Types)
+local Signal = require(script.Parent.Parent.Parent.Parent.Signal)
 
 local RagdollBuilder = {}
 
