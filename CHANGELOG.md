@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.3
+### Fixed 
+
+- RagdollBuilder class now imports dependencies using relative paths
+
 ## 0.6.2
 ### Changed 
 
