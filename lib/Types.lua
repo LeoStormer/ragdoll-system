@@ -2,6 +2,21 @@ local Signal = require(script.Parent.Parent.Signal)
 
 export type Joint = AnimationConstraint | Motor6D
 
+--[=[
+	@within RagdollSystem
+	@type SystemSettings { LowDetailModeThreshold: number, CollapseTimoutInterval: number, CollapseTimeoutDistanceThreshold: number, FreezeIfDead: boolean, }
+	`LowDetailModeThreshold`: the number of active ragdolls before the system 
+	starts using low detail mode.
+
+	`CollapseTimeoutInterval`: the interval in 
+	seconds between ragdoll distance checks while collapsed.<br/>
+
+	`CollapseTimeoutDistanceThreshold`: the minimum distance in studs a ragdoll
+	must have moved between distance checks to remain collapsed.
+
+	`FreezeIfDead`: Whether the system freezes dead ragdolls that have stopped
+	moving
+]=]
 export type SystemSettings = {
 	--- The number of active ragdolls before the system starts using low detail mode.
 	LowDetailModeThreshold: number,
@@ -10,8 +25,7 @@ export type SystemSettings = {
 	--- The minimum distance in studs a ragdoll must have moved between
 	--- distance checks to remain collapsed.
 	CollapseTimeoutDistanceThreshold: number,
-	--- Whether the system freezes ragdolls if dead when they are being timed
-	--- out of collapse. If false they remain collapsed.
+	--- Whether the system freezes dead ragdolls that have stopped moving.
 	FreezeIfDead: boolean,
 }
 

@@ -9,7 +9,7 @@ local Types = require(script.Parent.Types)
 local player = Players.LocalPlayer
 
 -- Automated Ragdoll Activation and Deactivation
-function activateLocalRagdollPhysics()
+local function activateLocalRagdollPhysics()
 	local ragdoll = RagdollSystem:getLocalRagdoll()
 	if not ragdoll then
 		return
@@ -19,7 +19,7 @@ function activateLocalRagdollPhysics()
 	RagdollSystem.Remotes.ActivateRagdoll:FireServer()
 end
 
-function deactivateLocalRagdollPhysics()
+local function deactivateLocalRagdollPhysics()
 	local ragdoll = RagdollSystem:getLocalRagdoll()
 	if not ragdoll then
 		return
@@ -29,7 +29,7 @@ function deactivateLocalRagdollPhysics()
 	RagdollSystem.Remotes.DeactivateRagdoll:FireServer()
 end
 
-function collapseLocalRagdoll()
+local function collapseLocalRagdoll()
 	local ragdoll = RagdollSystem:getLocalRagdoll()
 	if not ragdoll then
 		return
@@ -37,6 +37,11 @@ function collapseLocalRagdoll()
 
 	ragdoll:collapse()
 	RagdollSystem.Remotes.CollapseRagdoll:FireServer()
+end
+
+local function onRagdollAdded(ragdollModel: Model)
+	ragdollModel:WaitForChild("Humanoid")
+	RagdollSystem:replicateRagdoll(ragdollModel)
 end
 
 RagdollSystem.Signals.ActivateLocalRagdoll:Connect(activateLocalRagdollPhysics)
@@ -93,7 +98,6 @@ RagdollSystem.Signals.CollapseRagdoll:Connect(function(ragdollModel)
 	end
 end)
 
---Automated Ragdoll Construction
 RagdollSystem.RagdollConstructed:Connect(function(ragdoll: Types.Ragdoll)
 	if ragdoll.Character ~= player.Character then
 		return
@@ -109,11 +113,6 @@ RagdollSystem.RagdollConstructed:Connect(function(ragdoll: Types.Ragdoll)
 		(workspace.CurrentCamera).CameraSubject = ragdoll.Humanoid
 	end)
 end)
-
-function onRagdollAdded(ragdollModel: Model)
-	ragdollModel:WaitForChild("Humanoid")
-	RagdollSystem:replicateRagdoll(ragdollModel)
-end
 
 for _, ragdollModel in CollectionService:GetTagged("Ragdoll") do
 	task.spawn(onRagdollAdded, ragdollModel)

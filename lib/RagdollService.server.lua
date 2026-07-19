@@ -7,7 +7,7 @@ local RagdollFactory = RagdollSystem.RagdollFactory
 local Types = require(script.Parent.Types)
 
 --Automated Ragdoll Activation and Deactivation
-function activateRagdollPhysics(ragdoll: Types.Ragdoll)
+local function activateRagdollPhysics(ragdoll: Types.Ragdoll)
 	if RagdollSystem._activeRagdolls < RagdollSystem:getSystemSettings().LowDetailModeThreshold then
 		ragdoll:activateRagdollPhysics()
 	else
@@ -15,16 +15,28 @@ function activateRagdollPhysics(ragdoll: Types.Ragdoll)
 	end
 end
 
-function deactivateRagdollPhysics(ragdoll: Types.Ragdoll)
+local function deactivateRagdollPhysics(ragdoll: Types.Ragdoll)
 	ragdoll:deactivateRagdollPhysics()
 end
 
-function collapseRagdoll(ragdoll: Types.Ragdoll)
+local function collapseRagdoll(ragdoll: Types.Ragdoll)
 	if RagdollSystem._activeRagdolls < RagdollSystem:getSystemSettings().LowDetailModeThreshold then
 		ragdoll:collapse()
 	else
 		ragdoll:collapseLowDetail()
 	end
+end
+
+local function onRagdollAdded(ragdollModel)
+	RagdollSystem:addRagdoll(ragdollModel)
+end
+
+local function onPlayerAdded(player: Player)
+	player.CharacterAdded:Connect(function(character)
+		--for reasons I dont want to think about, the character model literally loses
+		--its head without this defer if you use this system with imediate mode signal behavior
+		task.defer(character.AddTag, character, "Ragdoll")
+	end)
 end
 
 RagdollSystem.Remotes.ActivateRagdoll.OnServerEvent:Connect(function(player: Player)
@@ -69,11 +81,6 @@ RagdollSystem.Signals.CollapseRagdoll:Connect(function(ragdollModel)
 	end
 end)
 
---Automated Ragdoll Construction
-function onRagdollAdded(ragdollModel)
-	RagdollSystem:addRagdoll(ragdollModel)
-end
-
 for _, ragdollModel in CollectionService:GetTagged("Ragdoll") do
 	task.spawn(onRagdollAdded, ragdollModel)
 end
@@ -83,14 +90,6 @@ CollectionService:GetInstanceAddedSignal("Ragdoll"):Connect(onRagdollAdded)
 CollectionService:GetInstanceRemovedSignal("Ragdoll"):Connect(function(ragdollModel)
 	RagdollSystem:removeRagdoll(ragdollModel)
 end)
-
-function onPlayerAdded(player: Player)
-	player.CharacterAdded:Connect(function(character)
-		--for reasons I dont want to think about, the character model literally loses
-		--its head without this defer if you use this system with imediate mode signal behavior
-		task.defer(character.AddTag, character, "Ragdoll")
-	end)
-end
 
 for _, player in Players:GetPlayers() do
 	task.spawn(onPlayerAdded, player)

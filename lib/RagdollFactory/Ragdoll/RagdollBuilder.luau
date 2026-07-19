@@ -1,15 +1,45 @@
+--!strict
+local RagdollBuilder = {}
+
+local BALLSOCKETCONSTRAINT_TEMPLATE = Instance.new("BallSocketConstraint")
+BALLSOCKETCONSTRAINT_TEMPLATE.Enabled = false
+BALLSOCKETCONSTRAINT_TEMPLATE.LimitsEnabled = true
+BALLSOCKETCONSTRAINT_TEMPLATE.TwistLimitsEnabled = true
+local NOCOLLISIONCONSTRAINT_TEMPLATE = Instance.new("NoCollisionConstraint")
+NOCOLLISIONCONSTRAINT_TEMPLATE.Enabled = false
+
 local TableUtils = require(script.Parent.Parent.Parent.TableUtils)
 local Types = require(script.Parent.Parent.Parent.Types)
 local Signal = require(script.Parent.Parent.Parent.Parent.Signal)
 
-local RagdollBuilder = {}
+local function getAttachment0(joint: Types.Joint): Attachment?
+	if joint:IsA("AnimationConstraint") then
+		assert(joint.Attachment0 ~= nil, `Attachment0 not found for AnimationConstraint {joint}`)
+		return joint.Attachment0
+	end
 
-local BALLSOCKETCONSTRAINT_TEMPLATE: BallSocketConstraint = Instance.new("BallSocketConstraint")
-BALLSOCKETCONSTRAINT_TEMPLATE.Enabled = false
-BALLSOCKETCONSTRAINT_TEMPLATE.LimitsEnabled = true
-BALLSOCKETCONSTRAINT_TEMPLATE.TwistLimitsEnabled = true
-local NOCOLLISIONCONSTRAINT_TEMPLATE: NoCollisionConstraint = Instance.new("NoCollisionConstraint")
-NOCOLLISIONCONSTRAINT_TEMPLATE.Enabled = false
+	assert(joint.Part0 ~= nil, `Given motor6D {joint} does not have a part0`)
+	-- local attachment = joint.Part0:QueryDescendants(`Attachment[CFrame = {joint.C0}]`)[1] -- this just errors with: Expected ']' to complete a property filter
+	local _, attachment: Attachment? = TableUtils.find(joint.Part0:QueryDescendants("Attachment"), function(inst)
+		return inst.CFrame == joint.C0
+	end)
+
+	return (attachment :: any) :: Attachment?
+end
+
+local function getAttachment1(joint: Types.Joint): Attachment?
+	if joint:IsA("AnimationConstraint") then
+		assert(joint.Attachment1 ~= nil, `Attachment1 not found for AnimationConstraint {joint}`)
+		return joint.Attachment1
+	end
+
+	assert(joint.Part1 ~= nil, `Given motor6D {joint} does not have a part0`)
+	local _, attachment: Attachment? = TableUtils.find(joint.Part1:QueryDescendants("Attachment"), function(inst)
+		return inst.CFrame == joint.C1
+	end)
+
+	return (attachment :: any) :: Attachment?
+end
 
 function RagdollBuilder.createNoCollisionConstraint(name: string, limb0: BasePart, limb1: BasePart)
 	local noCollisionConstraint = NOCOLLISIONCONSTRAINT_TEMPLATE:Clone()
@@ -23,7 +53,7 @@ function RagdollBuilder.createBallSocketConstraint(
 	name: string,
 	attachment0: Attachment,
 	attachment1: Attachment,
-	socketSetting: Types.SocketSetting
+	socketSetting: Types.SocketSetting?
 )
 	local socket = BALLSOCKETCONSTRAINT_TEMPLATE:Clone()
 	socket.Name = name
@@ -31,11 +61,10 @@ function RagdollBuilder.createBallSocketConstraint(
 	socket.Attachment1 = attachment1
 
 	if socketSetting ~= nil then
-		for key, value in socketSetting do
-			if socket[key] then
-				socket[key] = value
-			end
-		end
+		socket.MaxFrictionTorque = socketSetting.MaxFrictionTorque
+		socket.TwistLowerAngle = socketSetting.TwistLowerAngle
+		socket.TwistUpperAngle = socketSetting.TwistUpperAngle
+		socket.UpperAngle = socketSetting.UpperAngle
 	end
 
 	return socket
@@ -50,7 +79,7 @@ function RagdollBuilder.recordOriginalSettings(
 	ballSocketConstraints: { BallSocketConstraint },
 	noCollisionConstraints: { NoCollisionConstraint }
 )
-	local originalSettings = {}
+	local originalSettings = {} :: any
 	originalSettings[humanoid] = { WalkSpeed = humanoid.WalkSpeed, AutoRotate = humanoid.AutoRotate }
 	originalSettings[humanoidRootPart] = {
 		Anchored = humanoidRootPart.Anchored,
@@ -91,49 +120,13 @@ end
 function RagdollBuilder.getCharacterComponents(character: Model)
 	local humanoid = character:WaitForChild("Humanoid")
 	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-	local children = character:GetChildren()
-	local descendants = character:GetDescendants()
-
-	local limbs = TableUtils.filter(children, function(limb)
-		return limb:IsA("BasePart") and limb.Name ~= "HumanoidRootPart"
-	end)
-
-	local accessoryHandles = TableUtils.map(
-		TableUtils.filter(children, function(accessory)
-			return accessory:IsA("Accessory")
-		end),
-		function(accessory)
-			return accessory:FindFirstChild("Handle")
-		end
-	)
-
-	local joints = TableUtils.filter(descendants, function(motor)
-		return motor:IsA("Motor6D") or motor:IsA("AnimationConstraint")
-	end) :: { Types.Joint }
-
-	local ballSocketConstraints = TableUtils.filter(descendants, function(socket)
-		return socket:IsA("BallSocketConstraint")
-	end)
-
-	local noCollisionConstraints = TableUtils.filter(descendants, function(constraint)
-		return constraint:IsA("NoCollisionConstraint")
-	end)
+	local limbs = character:QueryDescendants("> BasePart:not(#HumanoidRootPart)")
+	local accessoryHandles = character:QueryDescendants("> Accessory > BasePart#Handle")
+	local joints = character:QueryDescendants("Motor6D, AnimationConstraint")
+	local ballSocketConstraints = character:QueryDescendants("BallSocketConstraint")
+	local noCollisionConstraints = character:QueryDescendants("NoCollisionConstraint")
 
 	return humanoid, humanoidRootPart, limbs, accessoryHandles, joints, ballSocketConstraints, noCollisionConstraints
-end
-
-local function getMotor6DAttachment0(motor: Motor6D)
-	local _, attachment: Attachment? = TableUtils.find((motor.Part0 :: BasePart):GetChildren(), function(inst)
-		return inst:IsA("Attachment") and inst.CFrame == motor.C0
-	end)
-	return attachment
-end
-
-local function getMotor6DAttachment1(motor: Motor6D)
-	local _, attachment: Attachment? = TableUtils.find((motor.Part1 :: BasePart):GetChildren(), function(inst)
-		return inst:IsA("Attachment") and inst.CFrame == motor.C1
-	end)
-	return attachment
 end
 
 function RagdollBuilder.buildLimbs(
@@ -146,8 +139,12 @@ function RagdollBuilder.buildLimbs(
 	noCollisionConstraints: { NoCollisionConstraint }
 )
 	for _, joint in joints do
-		local limb0 = if joint:IsA("Motor6D") then joint.Part0 else (joint.Attachment0 :: Attachment).Parent
-		local limb1 = if joint:IsA("Motor6D") then joint.Part1 else (joint.Attachment1 :: Attachment).Parent
+		local limb0 = (
+			if joint:IsA("Motor6D") then joint.Part0 else (joint.Attachment0 :: Attachment).Parent
+		) :: BasePart
+		local limb1 = (
+			if joint:IsA("Motor6D") then joint.Part1 else (joint.Attachment1 :: Attachment).Parent
+		) :: BasePart
 
 		local _, noCollisionConstraint = TableUtils.find(noCollisionConstraints, function(constraint)
 			return string.match(constraint.Name, joint.Name) ~= nil
@@ -164,32 +161,30 @@ function RagdollBuilder.buildLimbs(
 
 		if ballSocketConstraint == nil then
 			local override = blueprint.cframeOverrides[joint.Name]
-			local attachment0 = if joint:IsA("AnimationConstraint")
-				then joint.Attachment0
-				else getMotor6DAttachment0(joint)
+			local attachment0 = getAttachment0(joint)
 			if override or attachment0 == nil then
 				-- attachment0 == nil if and only if joint was a motor6D and no attachment was found whose CFrame matches joint.C0
-				attachment0 = Instance.new("Attachment")
-				attachment0.CFrame = if override then override.C0 else joint.C0
-				attachment0.Parent = limb0
-				trove:Add(attachment0)
+				local overrideAttachment = Instance.new("Attachment")
+				overrideAttachment.CFrame = if override then override.C0 else (joint :: Motor6D).C0
+				overrideAttachment.Parent = limb0
+				trove:Add(overrideAttachment)
+				attachment0 = overrideAttachment
 			end
 
-			local attachment1 = if joint:IsA("AnimationConstraint")
-				then joint.Attachment1
-				else getMotor6DAttachment1(joint)
+			local attachment1 = getAttachment1(joint)
 			if override or attachment1 == nil then
 				-- same story as above
-				attachment1 = Instance.new("Attachment")
-				attachment1.CFrame = if override then override.C1 else joint.C1
-				attachment1.Parent = limb1
-				trove:Add(attachment1)
+				local overrideAttachment = Instance.new("Attachment")
+				overrideAttachment.CFrame = if override then override.C1 else (joint :: Motor6D).C1
+				overrideAttachment.Parent = limb1
+				trove:Add(overrideAttachment)
+				attachment1 = overrideAttachment
 			end
 
 			ballSocketConstraint = RagdollBuilder.createBallSocketConstraint(
 				`{joint.Name}BallSocket`,
-				attachment0,
-				attachment1,
+				attachment0 :: Attachment,
+				attachment1 :: Attachment,
 				blueprint.socketSettings[joint.Name]
 			)
 			table.insert(sockets, ballSocketConstraint)

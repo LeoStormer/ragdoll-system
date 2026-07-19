@@ -4,21 +4,24 @@ local UserInputService = game:GetService("UserInputService")
 local RagdollSystem = require(ReplicatedStorage.Packages.RagdollSystem)
 local Types = require(ReplicatedStorage.Packages.RagdollSystem.Types)
 
-function collapse(ragdoll: Types.Ragdoll)
+local function collapse(ragdoll: Types.Ragdoll)
 	-- ragdoll:collapseLowDetail()
-	RagdollSystem:collapseLocalRagdoll()
+	ragdoll:collapse()
+	-- RagdollSystem:collapseLocalRagdoll()
 end
 
-function activate(ragdoll: Types.Ragdoll)
+local function activate(ragdoll: Types.Ragdoll)
 	-- ragdoll:activateRagdollPhysicsLowDetail()
-	RagdollSystem:activateLocalRagdoll()
+	ragdoll:activateRagdollPhysics()
+	-- RagdollSystem:activateLocalRagdoll()
 end
 
-function deactivate(_ragdoll: Types.Ragdoll)
-	RagdollSystem:deactivateLocalRagdoll()
+local function deactivate(ragdoll: Types.Ragdoll)
+	ragdoll:deactivateRagdollPhysics()
+	-- RagdollSystem:deactivateLocalRagdoll()
 end
 
-function toggle(ragdoll: Types.Ragdoll)
+local function toggle(ragdoll: Types.Ragdoll)
 	if ragdoll:isRagdolled() then
 		deactivate(ragdoll)
 	else
