@@ -180,6 +180,7 @@ local function startMotionSensor()
 	end)
 end
 
+-- selene: allow(incorrect_standard_library_use)
 --[=[
 	@param settingsDictionary SystemSettings
 	Sets the settings of the system, all fields are optional. If a field is not
@@ -200,20 +201,19 @@ function RagdollSystem:setSystemSettings(settingsDictionary: {
 	local newSettings = {}
 	newSettings.LowDetailModeThreshold = if settingsDictionary.LowDetailModeThreshold
 			and typeof(settingsDictionary.LowDetailModeThreshold) == "number"
-			and settingsDictionary.LowDetailModeThreshold == settingsDictionary.LowDetailModeThreshold
+			and math.isfinite(settingsDictionary.LowDetailModeThreshold)
 		then settingsDictionary.LowDetailModeThreshold
 		else systemSettings.LowDetailModeThreshold
 
 	newSettings.CollapseTimeoutInterval = if settingsDictionary.CollapseTimeoutInterval
 			and typeof(settingsDictionary.CollapseTimeoutInterval) == "number"
-			and settingsDictionary.CollapseTimeoutInterval == settingsDictionary.CollapseTimeoutInterval
+			and math.isfinite(settingsDictionary.CollapseTimeoutInterval)
 		then settingsDictionary.CollapseTimeoutInterval
 		else systemSettings.CollapseTimeoutInterval
 
 	newSettings.CollapseTimeoutDistanceThreshold = if settingsDictionary.CollapseTimeoutDistanceThreshold
 			and typeof(settingsDictionary.CollapseTimeoutDistanceThreshold) == "number"
-			and settingsDictionary.CollapseTimeoutDistanceThreshold
-				== settingsDictionary.CollapseTimeoutDistanceThreshold
+			and math.isfinite(settingsDictionary.CollapseTimeoutDistanceThreshold)
 		then settingsDictionary.CollapseTimeoutDistanceThreshold
 		else systemSettings.CollapseTimeoutDistanceThreshold
 
@@ -222,7 +222,7 @@ function RagdollSystem:setSystemSettings(settingsDictionary: {
 		then settingsDictionary.FreezeIfDead
 		else systemSettings.FreezeIfDead
 
-	systemSettings = table.freeze(newSettings) :: Types.SystemSettings
+	systemSettings = table.freeze(newSettings)
 end
 
 --[=[
