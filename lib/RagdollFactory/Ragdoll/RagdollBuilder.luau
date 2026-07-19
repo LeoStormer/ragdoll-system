@@ -118,8 +118,8 @@ function RagdollBuilder.recordOriginalSettings(
 end
 
 function RagdollBuilder.getCharacterComponents(character: Model)
-	local humanoid = character:WaitForChild("Humanoid")
-	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
+	local humanoidRootPart = character:WaitForChild("HumanoidRootPart") :: BasePart
 	local limbs = character:QueryDescendants("> BasePart:not(#HumanoidRootPart)")
 	local accessoryHandles = character:QueryDescendants("> Accessory > BasePart#Handle")
 	local joints = character:QueryDescendants("Motor6D, AnimationConstraint")
