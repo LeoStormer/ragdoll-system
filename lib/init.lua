@@ -97,13 +97,11 @@ local function registerEvents(ragdoll)
 
 	ragdoll.RagdollBegan:Connect(function()
 		RagdollSystem._activeRagdolls += 1
-		print("Began")
 	end)
 
 	ragdoll.RagdollEnded:Connect(function()
 		RagdollSystem._activeRagdolls -= 1
 		removeFromLoop(ragdoll)
-		print("Ended")
 	end)
 
 	ragdoll.Destroying:Connect(function()
