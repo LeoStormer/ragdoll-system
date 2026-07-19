@@ -14,13 +14,6 @@ local Types = require(script.Types)
 export type SystemSettings = Types.SystemSettings
 export type Ragdoll = Types.Ragdoll
 
-local DEFAULT_SETTINGS: SystemSettings = table.freeze({
-	LowDetailModeThreshold = 15,
-	CollapseTimeoutInterval = 1,
-	CollapseTimeoutDistanceThreshold = 2,
-	FreezeIfDead = true,
-})
-
 RagdollSystem.Remotes = {
 	ActivateRagdoll = script.Remotes.ActivateRagdollRemote,
 	DeactivateRagdoll = script.Remotes.DeactivateRagdollRemote,
@@ -71,7 +64,12 @@ RagdollSystem._ragdolls = {} :: { [Model]: Types.Ragdoll }
 
 local collapsed = {}
 local ragdollMap = {}
-local systemSettings: SystemSettings = DEFAULT_SETTINGS
+local systemSettings: SystemSettings = table.freeze({
+	LowDetailModeThreshold = 15,
+	CollapseTimeoutInterval = 1,
+	CollapseTimeoutDistanceThreshold = 2,
+	FreezeIfDead = true,
+})
 
 local function removeFromLoop(ragdoll)
 	local index = ragdollMap[ragdoll]
@@ -352,7 +350,6 @@ function RagdollSystem:collapseLocalRagdoll()
 	self.Signals.CollapseLocalRagdoll:Fire()
 end
 
-RagdollSystem:setSystemSettings(script:GetAttributes())
 RagdollFactory.RagdollConstructed:Connect(registerEvents)
 
 task.defer(startMotionSensor)
