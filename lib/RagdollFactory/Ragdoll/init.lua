@@ -1,18 +1,17 @@
 -- Credit to Rookstun and the Ragdoll Solution: https://devforum.roblox.com/t/ragdoll-solution-r15customizable-ragdolls-for-use-with-layered-clothing/1738685
 -- local RunService = game:GetService("RunService")
 
-local Types = require(script.Parent.Parent.Types)
-local Trove = require(script.Parent.Parent.Parent.Trove)
-local RagdollBuilder = require(script.RagdollBuilder)
-
 --[=[
 	@class Ragdoll
 	@__index Ragdoll
-	This class wraps around a Model and enables ragdoll physics by finding or
-	creating physics constraints for it based on a [Blueprint]. The [Model] must
+	This class wraps around a [Model] and enables ragdoll physics by finding or
+	creating physics constraints for it based on a [Blueprint]. The Model must
 	contain a [Humanoid], a HumanoidRootPart, and have [Motor6D] or
 	[AnimationConstraint] descendants as joints.
 ]=]
+local Ragdoll = {}
+Ragdoll.__index = Ragdoll
+
 --[=[
 	@within Ragdoll
 	@private
@@ -115,14 +114,16 @@ local RagdollBuilder = require(script.RagdollBuilder)
 
 local LIMB_PHYSICAL_PROPERTIES = PhysicalProperties.new(5, 0.7, 0.5, 100, 100)
 local ROOT_PART_PHYSICAL_PROPERTIES = PhysicalProperties.new(0.01, 0, 0, 0, 0)
-
-local Ragdoll = {}
-Ragdoll.__index = Ragdoll
-
 local ACCEPTABLE_RAGDOLL_STATES = {
 	[Enum.HumanoidStateType.Dead] = true,
 	[Enum.HumanoidStateType.Physics] = true,
 }
+
+local Types = require(script.Parent.Parent.Types)
+local Trove = require(script.Parent.Parent.Parent.Trove)
+local RagdollBuilder = require(script.RagdollBuilder)
+
+export type Ragdoll = Types.Ragdoll
 
 local function connectEvents(trove, ragdoll)
 	trove:Connect(ragdoll.Humanoid.StateChanged, function(old, new)
@@ -206,7 +207,7 @@ function Ragdoll.new(character: Model, blueprint: Types.Blueprint): Ragdoll
 end
 
 --@ignore
-function Ragdoll.replicate(character: Model, blueprint): Ragdoll
+function Ragdoll.replicate(character: Model, blueprint: Types.Blueprint): Ragdoll
 	local trove = Trove.new()
 	local constraintsFolder = character:WaitForChild("RagdollConstraints")
 	local socketsFolder = constraintsFolder:WaitForChild("BallSocketConstraints")
@@ -457,10 +458,9 @@ end
 --[=[
 	@within Ragdoll
 	@method Destroy
+
 	Alias for destroy().
 ]=]
 Ragdoll.Destroy = Ragdoll.destroy
-
-export type Ragdoll = Types.Ragdoll
 
 return Ragdoll
