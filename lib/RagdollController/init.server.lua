@@ -11,7 +11,7 @@ local player = Players.LocalPlayer
 -- Automated Ragdoll Activation and Deactivation
 function activateLocalRagdollPhysics()
 	local ragdoll = RagdollSystem:getLocalRagdoll()
-	if not ragdoll or ragdoll:isRagdolled() then
+	if not ragdoll then
 		return
 	end
 
@@ -21,7 +21,7 @@ end
 
 function deactivateLocalRagdollPhysics()
 	local ragdoll = RagdollSystem:getLocalRagdoll()
-	if not ragdoll or not ragdoll:isRagdolled() then
+	if not ragdoll then
 		return
 	end
 
