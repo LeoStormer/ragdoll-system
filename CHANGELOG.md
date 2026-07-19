@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.4
+### Fixed 
+
+- Calling methods ragdoll:collapse() and ragdoll:activateRagdollPhysics() of the Ragdoll class now correctly replicates to the server
+- Calling RagdollSystem:setSystemSettings({}) with missing properties now leaves those properties unchanged rather than reverting to
+  default, as documented.
+
+### Changed
+
+- RagdollSystem no longer checks its attributes for initial system settings.
+
 ## 0.6.3
 ### Fixed 
 
