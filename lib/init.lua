@@ -71,7 +71,7 @@ RagdollSystem._ragdolls = {} :: { [Model]: Types.Ragdoll }
 
 local collapsed = {}
 local ragdollMap = {}
-local systemSettings: SystemSettings
+local systemSettings: SystemSettings = DEFAULT_SETTINGS
 
 local function removeFromLoop(ragdoll)
 	local index = ragdollMap[ragdoll]
@@ -204,25 +204,25 @@ function RagdollSystem:setSystemSettings(settingsDictionary: {
 			and typeof(settingsDictionary.LowDetailModeThreshold) == "number"
 			and settingsDictionary.LowDetailModeThreshold == settingsDictionary.LowDetailModeThreshold
 		then settingsDictionary.LowDetailModeThreshold
-		else DEFAULT_SETTINGS.LowDetailModeThreshold
+		else systemSettings.LowDetailModeThreshold
 
 	newSettings.CollapseTimeoutInterval = if settingsDictionary.CollapseTimeoutInterval
 			and typeof(settingsDictionary.CollapseTimeoutInterval) == "number"
 			and settingsDictionary.CollapseTimeoutInterval == settingsDictionary.CollapseTimeoutInterval
 		then settingsDictionary.CollapseTimeoutInterval
-		else DEFAULT_SETTINGS.CollapseTimeoutInterval
+		else systemSettings.CollapseTimeoutInterval
 
 	newSettings.CollapseTimeoutDistanceThreshold = if settingsDictionary.CollapseTimeoutDistanceThreshold
 			and typeof(settingsDictionary.CollapseTimeoutDistanceThreshold) == "number"
 			and settingsDictionary.CollapseTimeoutDistanceThreshold
 				== settingsDictionary.CollapseTimeoutDistanceThreshold
 		then settingsDictionary.CollapseTimeoutDistanceThreshold
-		else DEFAULT_SETTINGS.CollapseTimeoutDistanceThreshold
+		else systemSettings.CollapseTimeoutDistanceThreshold
 
 	newSettings.FreezeIfDead = if settingsDictionary.FreezeIfDead ~= nil
 			and typeof(settingsDictionary.FreezeIfDead) == "boolean"
 		then settingsDictionary.FreezeIfDead
-		else DEFAULT_SETTINGS.FreezeIfDead
+		else systemSettings.FreezeIfDead
 
 	systemSettings = table.freeze(newSettings) :: Types.SystemSettings
 end
